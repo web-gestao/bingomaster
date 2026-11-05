@@ -226,7 +226,7 @@ input, select, textarea { font-family: inherit; }
 .style-btn:hover { border-color: var(--accent); }
 .style-btn.active { border-color: var(--accent); background: linear-gradient(135deg, var(--accent), #6d4aff); color: white; }
 .style-btn .preview-mini { width: 100%; height: 40px; border-radius: 4px; margin-bottom: 6px; }
-.card-preview-wrap { display: flex; justify-content: center; padding: 20px; background: #1a1a1a; border-radius: 12px; }
+.card-preview-wrap { display: flex; justify-content: center; padding: 20px; background: #1a1a1a; border-radius: 12px; overflow: auto; max-height: 80vh; }
 .card-preview { width: 100%; max-width: 480px; background: white; color: black; border-radius: 6px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
 .modelos-list { display: flex; flex-direction: column; gap: 8px; }
 .modelo-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-hover); padding: 10px 14px; border-radius: 8px; border-left: 3px solid var(--accent); cursor: pointer; }
@@ -499,11 +499,20 @@ input, select, textarea { font-family: inherit; }
           <div class="control-row">
             <label class="pattern-toggle"><input type="radio" name="layout-tipo" value="tradicional" onchange="setLayout('tradicional')"> Tradicional (1 cartela)</label>
             <label class="pattern-toggle"><input type="radio" name="layout-tipo" value="eletronico" checked onchange="setLayout('eletronico')"> <b>Eletrônico (2 cartelas + 2 fichas por A4)</b></label>
+            <label class="pattern-toggle"><input type="radio" name="layout-tipo" value="matriz_premios" onchange="setLayout('matriz_premios')"> <b>Matriz + 5 Prêmios (Arte Canva)</b></label>
+          </div>
+        </div>
+
+        <div class="design-section" id="arte-fundo-section" style="display:none;">
+          <h4>🖼️ Arte de Fundo (A4)</h4>
+          <div class="form-group">
+            <label>URL da Imagem (ex: arte-fundo.jpg)</label>
+            <input type="text" id="design-arte-url" placeholder="Cole o link da imagem aqui" oninput="updateDesignPreview()">
           </div>
         </div>
 
         <div class="design-section">
-          <h4>🎨 Estilo</h4>
+          <h4>🎨 Estilo (Para Layout Tradicional)</h4>
           <div class="style-options">
             <button class="style-btn" data-style="classico" onclick="setStyle('classico', this)">
               <div class="preview-mini" style="background:linear-gradient(135deg,#fff,#f0f0f0);border:1px solid #ccc;"></div>
@@ -805,10 +814,8 @@ input, select, textarea { font-family: inherit; }
 const SUPABASE_URL = 'https://oqzauaykcrnzisrbsjsm.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xemF1YXlrY3JuemlzcmJzanNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMTkxMzUsImV4cCI6MjEwNTU5NTEzNX0.KbXCq6Cudl92z7neB34k5-L_nTmT3IXn6dcX1Sp88qE';
 
-// ALTERAÇÃO 1: URL do domínio principal do GitHub Pages
-const NETLIFY_DOMAIN = 'https://web-gestao.github.io/Bingomaster';
-// ALTERAÇÃO 2: URL do cadastro no GitHub Pages
-const CADASTRO_DOMAIN = 'https://web-gestao.github.io/Bingomaster/cadastro.html';
+const NETLIFY_DOMAIN = 'https://web-gestao.github.io/bingomaster';
+const CADASTRO_DOMAIN = 'https://web-gestao.github.io/bingomaster/cadastro.html';
 
 function loadCredentials() {
   try { const s = JSON.parse(localStorage.getItem('bm_credentials') || 'null'); if (s && s.user && s.pass) return s; } catch(e) {}
@@ -918,6 +925,7 @@ const DEFAULT_DESIGN = {
   operator: 'Bingo Eletrônico',
   phone: '',
   tipoCodigo: 'qrcode',
+  arteFundoUrl: '', // Nova propriedade para a imagem do Canva
   colors: { bg: '#ffffff', head: '#1e40af', headText: '#ffffff', num: '#000000', border: '#000000' }
 };
 let cardDesign = JSON.parse(JSON.stringify(DEFAULT_DESIGN));
@@ -954,9 +962,22 @@ function aplicarDesignNaUI() {
   setVal('premio4', cardDesign.premio4);
   setVal('premio5', cardDesign.premio5);
   setVal('premio6', cardDesign.premio6);
+  setVal('design-arte-url', cardDesign.arteFundoUrl); // Adicionado
+  
+  // Mostrar ou esconder a seção da URL da arte dependendo do layout
+  const arteSection = document.getElementById('arte-fundo-section');
+  if (arteSection) {
+    arteSection.style.display = (cardDesign.layout === 'matriz_premios') ? 'block' : 'none';
+  }
+
   updateDesignPreview(); renderModelos();
 }
-function setLayout(tipo) { cardDesign.layout = tipo; saveDesign(); updateDesignPreview(); }
+function setLayout(tipo) { 
+  cardDesign.layout = tipo; 
+  saveDesign(); 
+  aplicarDesignNaUI(); // Atualiza a visibilidade do campo de URL
+  updateDesignPreview(); 
+}
 function setStyle(estilo, btn) {
   cardDesign.estilo = estilo;
   document.querySelectorAll('.style-btn').forEach(function(b) { b.classList.remove('active'); }); btn.classList.add('active');
@@ -968,13 +989,12 @@ function setStyle(estilo, btn) {
 }
 function setTipoCodigo(t) { cardDesign.tipoCodigo = t; saveDesign(); updateDesignPreview(); }
 function updateDesignPreview() {
-  const ids = ['design-event','design-date','design-horario','design-municipio','design-paroquia','design-valor-cartela','design-operator','design-phone','premio1','premio2','premio3','premio4','premio5','premio6'];
-  const keys = ['evento','data','horario','municipio','paroquia','valorCartela','operator','phone','premio1','premio2','premio3','premio4','premio5','premio6'];
+  const ids = ['design-event','design-date','design-horario','design-municipio','design-paroquia','design-valor-cartela','design-operator','design-phone','premio1','premio2','premio3','premio4','premio5','premio6','design-arte-url'];
+  const keys = ['evento','data','horario','municipio','paroquia','valorCartela','operator','phone','premio1','premio2','premio3','premio4','premio5','premio6','arteFundoUrl'];
   ids.forEach(function(id, i) { cardDesign[keys[i]] = (document.getElementById(id) || {}).value || ''; });
   renderPreview();
 }
 
-// ALTERAÇÃO 3: Função que gera o link do QR Code para abrir a cartela do jogador
 function gerarLinkCodigo(idCartela) {
   return NETLIFY_DOMAIN + '/ver-cartela.html?id=' + idCartela;
 }
@@ -1106,6 +1126,67 @@ async function publicarJogadoresNuvem(silencioso) {
 /* ============ PREVIEW ============ */
 function renderPreview() {
   const p = document.getElementById('card-preview'); if (!p) return;
+
+  // PREVIEW DO NOVO LAYOUT MATRIZ + PRÊMIOS
+  if (cardDesign.layout === 'matriz_premios') {
+    let html = `<div style="position: relative; width: 100%; aspect-ratio: 210 / 297; background: url('${cardDesign.arteFundoUrl || 'https://via.placeholder.com/600x800?text=Fundo+da+Arte+Aqui'}') center/cover no-repeat; border: 2px solid #ccc; border-radius: 4px; overflow: hidden;">`;
+    
+    // Função para gerar mini grade
+    const miniGrade = () => {
+      let g = '<div style="display:grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: #000; padding: 1px;">';
+      for(let i=0; i<25; i++) {
+        g += `<div style="background: #fff; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 5px; font-weight: bold; color: #000;">${i===12 ? 'FREE' : Math.floor(Math.random()*75)+1}</div>`;
+      }
+      g += '</div>';
+      return g;
+    };
+
+    // Texto auxiliar de prêmio
+    const txtPremio = (num, titulo, valor) => `
+      <div style="text-align: center; margin-bottom: 2px;">
+        <div style="font-size: 6px; font-weight: 900; color: #1e40af;">${num}º PRÊMIO</div>
+        <div style="font-size: 5px; font-weight: 800; color: #dc2626;">${titulo}</div>
+        <div style="font-size: 6px; font-weight: 900; color: #000;">${valor || 'R$ 500'}</div>
+      </div>
+    `;
+
+    // Posicionamento (estimado em porcentagem para o preview)
+    html += `<div style="position: absolute; top: 25%; left: 4%; width: 28%;">
+      <div style="text-align:center; margin-bottom: 2px; font-size: 6px; font-weight:900; color:#1e40af;">MATRIZ</div>
+      ${miniGrade()}
+    </div>`;
+    
+    html += `<div style="position: absolute; top: 25%; left: 36%; width: 28%;">
+      ${txtPremio(1, 'CARTELA CHEIA', cardDesign.premio1)}
+      ${miniGrade()}
+    </div>`;
+
+    html += `<div style="position: absolute; top: 25%; left: 68%; width: 28%;">
+      ${txtPremio(2, 'QUINA', cardDesign.premio2)}
+      ${miniGrade()}
+    </div>`;
+
+    html += `<div style="position: absolute; top: 62%; left: 4%; width: 28%;">
+      ${txtPremio(3, 'QUINA', cardDesign.premio3)}
+      ${miniGrade()}
+    </div>`;
+
+    html += `<div style="position: absolute; top: 62%; left: 36%; width: 28%;">
+      ${txtPremio(4, 'QUINA', cardDesign.premio4)}
+      ${miniGrade()}
+    </div>`;
+
+    html += `<div style="position: absolute; top: 62%; left: 68%; width: 28%;">
+      ${txtPremio(5, 'QUINA', cardDesign.premio5)}
+      ${miniGrade()}
+    </div>`;
+
+    html += '</div>';
+    p.innerHTML = html;
+    return;
+  }
+
+  // PREVIEW DOS LAYOUTS ANTIGOS
   const c = cardDesign.colors;
   const exemploB = [1,6,8,11,13], exemploI = [20,21,22,28,29], exemploN = [32,38,'FREE',42,45], exemploG = [47,50,53,54,55], exemploO = [61,63,67,72,75];
 
@@ -1342,6 +1423,110 @@ function gerarFichaImpressao(card, c) {
 function buildPrintArea(cards) {
   const area = document.getElementById('print-area');
   area.innerHTML = '';
+  
+  // ---- NOVO LAYOUT: MATRIZ + 5 PRÊMIOS (ARTE) ----
+  if (cardDesign.layout === 'matriz_premios') {
+    cards.forEach(card => {
+      const page = document.createElement('div');
+      page.className = 'print-card';
+      // O fundo é a arte do Canva
+      page.style.cssText = `width: 210mm; height: 297mm; background-image: url('${cardDesign.arteFundoUrl}'); background-size: cover; background-position: center top; position: relative; page-break-after: always; font-family: Arial, sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact;`;
+
+      // Função para gerar a tabela de números transparente
+      const grade = (isMatriz) => {
+        let h = '<table style="border-collapse:collapse;width:100%;table-layout:fixed;background:rgba(255,255,255,0.9);border-radius: 4px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+        h += '<tr>';
+        ['B','I','N','G','O'].forEach(l => {
+          h += `<td style="color:#000;font-weight:900;text-align:center;font-size:${isMatriz ? '14px' : '10px'};border:1px solid #333;padding:1px 0;">${l}</td>`;
+        });
+        h += '</tr>';
+        for (let r = 0; r < 5; r++) {
+          h += '<tr>';
+          [card.B[r], card.I[r], card.N[r], card.G[r], card.O[r]].forEach(cell => {
+            if (cell === 'FREE') h += `<td style="color:#000;background:#fff;font-size:${isMatriz ? '10px' : '8px'};text-align:center;border:1px solid #333;font-weight:900;">FREE</td>`;
+            else h += `<td style="color:#000;background:#fff;font-weight:800;text-align:center;font-size:${isMatriz ? '14px' : '10px'};border:1px solid #333;">${String(cell).padStart(2,'0')}</td>`;
+          });
+          h += '</tr>';
+        }
+        h += '</table>';
+        return h;
+      };
+
+      // Função para gerar texto do prêmio
+      const txtPremio = (num, titulo, valor) => `
+        <div style="text-align:center; margin-bottom: 2px;">
+          <div style="font-size: 11px; font-weight: 900; color: #1e40af; text-shadow: 0 0 2px #fff, 0 0 2px #fff;">${num}º PRÊMIO</div>
+          <div style="font-size: 9px; font-weight: 800; color: #dc2626; text-shadow: 0 0 2px #fff, 0 0 2px #fff;">${titulo}</div>
+          <div style="font-size: 12px; font-weight: 900; color: #000; text-shadow: 0 0 2px #fff, 0 0 2px #fff;">${valor || 'R$ ---'}</div>
+        </div>
+      `;
+
+      // Posicionamento Absoluto (TOP / LEFT)
+      // NOTA: Estes valores são estimativas. Se a sua arte no Canva for diferente, 
+      // ajuste as porcentagens (top, left, width) para encaixar perfeitamente nos quadrados em branco.
+      
+      let html = '';
+
+      // 1. MATRIZ (Canto Superior Esquerdo)
+      html += `
+        <div style="position: absolute; top: 27%; left: 4%; width: 28%;">
+          <div style="text-align:center; margin-bottom: 2px;">
+            <div style="font-size: 10px; font-weight: 900; color: #1e40af; text-shadow: 0 0 2px #fff;">VALOR: ${cardDesign.valorCartela || 'R$ ---'}</div>
+          </div>
+          ${grade(true)}
+        </div>
+      `;
+
+      // 2. 1º PRÊMIO (Canto Superior Central)
+      html += `
+        <div style="position: absolute; top: 27%; left: 36%; width: 28%;">
+          ${txtPremio(1, 'CARTELA CHEIA', cardDesign.premio1)}
+          ${grade(false)}
+        </div>
+      `;
+
+      // 3. 2º PRÊMIO (Canto Superior Direito)
+      html += `
+        <div style="position: absolute; top: 27%; left: 68%; width: 28%;">
+          ${txtPremio(2, 'QUINA', cardDesign.premio2)}
+          ${grade(false)}
+        </div>
+      `;
+
+      // 4. 3º PRÊMIO (Canto Inferior Esquerdo)
+      html += `
+        <div style="position: absolute; top: 62%; left: 4%; width: 28%;">
+          ${txtPremio(3, 'QUINA', cardDesign.premio3)}
+          ${grade(false)}
+        </div>
+      `;
+
+      // 5. 4º PRÊMIO (Canto Inferior Central)
+      html += `
+        <div style="position: absolute; top: 62%; left: 36%; width: 28%;">
+          ${txtPremio(4, 'QUINA', cardDesign.premio4)}
+          ${grade(false)}
+        </div>
+      `;
+
+      // 6. 5º PRÊMIO (Canto Inferior Direito)
+      html += `
+        <div style="position: absolute; top: 62%; left: 68%; width: 28%;">
+          ${txtPremio(5, 'QUINA', cardDesign.premio5)}
+          ${grade(false)}
+        </div>
+      `;
+
+      // Número da Cartela no rodapé esquerdo para controle
+      html += `<div style="position: absolute; bottom: 2%; left: 2%; font-size: 10px; font-weight: bold; color: #000; background: rgba(255,255,255,0.8); padding: 2px 4px; border-radius: 4px;">Nº ${card.number}</div>`;
+
+      page.innerHTML = html;
+      area.appendChild(page);
+    });
+    return;
+  }
+
+  // ---- LAYOUTS ANTIGOS ----
   const c = cardDesign.colors;
 
   if (cardDesign.layout === 'eletronico') {
@@ -2330,7 +2515,7 @@ if (loadState()) console.log('✅ Restaurado: ' + state.cards.length + ' cartela
 ensureBallsGrid(); updateBallsVisual(); renderOperatorInfo(); renderPublicAll(); loadAudioSettings(); updateRoundButtons(); renderCardsListNow(); renderPlayersTable(); aplicarDesignNaUI();
 setTimeout(verificarPendentes, 3000);
 setTimeout(function() { publicarEventoNuvem(true); publicarJogadoresNuvem(true); }, 2000);
-console.log('🎱 BingoMaster v29.0 — Valor da cartela adicionado');
+console.log('🎱 BingoMaster v30.0 — Layout Matriz + Prêmios Adicionado');
 </script>
 </body>
 </html>
