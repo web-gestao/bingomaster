@@ -962,7 +962,7 @@ function aplicarDesignNaUI() {
   setVal('premio4', cardDesign.premio4);
   setVal('premio5', cardDesign.premio5);
   setVal('premio6', cardDesign.premio6);
-  setVal('design-arte-url', cardDesign.arteFundoUrl); // Adicionado
+  setVal('design-arte-url', cardDesign.arteFundoUrl);
   
   // Mostrar ou esconder a seção da URL da arte dependendo do layout
   const arteSection = document.getElementById('arte-fundo-section');
@@ -1432,19 +1432,19 @@ function buildPrintArea(cards) {
       // O fundo é a arte do Canva
       page.style.cssText = `width: 210mm; height: 297mm; background-image: url('${cardDesign.arteFundoUrl}'); background-size: cover; background-position: center top; position: relative; page-break-after: always; font-family: Arial, sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact;`;
 
-      // Função para gerar a tabela de números transparente
+      // Função para gerar a tabela de números transparente com medidas exatas
       const grade = (isMatriz) => {
-        let h = '<table style="border-collapse:collapse;width:100%;table-layout:fixed;background:rgba(255,255,255,0.9);border-radius: 4px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+        let h = '<table style="border-collapse:collapse;width:100%;table-layout:fixed;background:rgba(255,255,255,0.95);border-radius: 2mm; overflow: hidden; box-shadow: 0 1mm 2mm rgba(0,0,0,0.1);">';
         h += '<tr>';
         ['B','I','N','G','O'].forEach(l => {
-          h += `<td style="color:#000;font-weight:900;text-align:center;font-size:${isMatriz ? '14px' : '10px'};border:1px solid #333;padding:1px 0;">${l}</td>`;
+          h += `<td style="color:#000;font-weight:900;text-align:center;font-size:${isMatriz ? '14pt' : '10pt'};border:0.5mm solid #333;padding:0.5mm 0;">${l}</td>`;
         });
         h += '</tr>';
         for (let r = 0; r < 5; r++) {
           h += '<tr>';
           [card.B[r], card.I[r], card.N[r], card.G[r], card.O[r]].forEach(cell => {
-            if (cell === 'FREE') h += `<td style="color:#000;background:#fff;font-size:${isMatriz ? '10px' : '8px'};text-align:center;border:1px solid #333;font-weight:900;">FREE</td>`;
-            else h += `<td style="color:#000;background:#fff;font-weight:800;text-align:center;font-size:${isMatriz ? '14px' : '10px'};border:1px solid #333;">${String(cell).padStart(2,'0')}</td>`;
+            if (cell === 'FREE') h += `<td style="color:#000;background:#fff;font-size:${isMatriz ? '10pt' : '8pt'};text-align:center;border:0.5mm solid #333;font-weight:900;">FREE</td>`;
+            else h += `<td style="color:#000;background:#fff;font-weight:800;text-align:center;font-size:${isMatriz ? '14pt' : '10pt'};border:0.5mm solid #333;">${String(cell).padStart(2,'0')}</td>`;
           });
           h += '</tr>';
         }
@@ -1454,24 +1454,21 @@ function buildPrintArea(cards) {
 
       // Função para gerar texto do prêmio
       const txtPremio = (num, titulo, valor) => `
-        <div style="text-align:center; margin-bottom: 2px;">
-          <div style="font-size: 11px; font-weight: 900; color: #1e40af; text-shadow: 0 0 2px #fff, 0 0 2px #fff;">${num}º PRÊMIO</div>
-          <div style="font-size: 9px; font-weight: 800; color: #dc2626; text-shadow: 0 0 2px #fff, 0 0 2px #fff;">${titulo}</div>
-          <div style="font-size: 12px; font-weight: 900; color: #000; text-shadow: 0 0 2px #fff, 0 0 2px #fff;">${valor || 'R$ ---'}</div>
+        <div style="text-align:center; margin-bottom: 1mm;">
+          <div style="font-size: 11pt; font-weight: 900; color: #1e40af; text-shadow: 0 0 2px #fff, 0 0 2px #fff;">${num}º PRÊMIO</div>
+          <div style="font-size: 9pt; font-weight: 800; color: #dc2626; text-shadow: 0 0 2px #fff, 0 0 2px #fff;">${titulo}</div>
+          <div style="font-size: 12pt; font-weight: 900; color: #000; text-shadow: 0 0 2px #fff, 0 0 2px #fff;">${valor || 'R$ ---'}</div>
         </div>
       `;
 
-      // Posicionamento Absoluto (TOP / LEFT)
-      // NOTA: Estes valores são estimativas. Se a sua arte no Canva for diferente, 
-      // ajuste as porcentagens (top, left, width) para encaixar perfeitamente nos quadrados em branco.
-      
+      // MEDIDAS EXATAS EM MILÍMETROS PARA UMA FOLHA A4 (210mm x 297mm)
       let html = '';
 
       // 1. MATRIZ (Canto Superior Esquerdo)
       html += `
-        <div style="position: absolute; top: 27%; left: 4%; width: 28%;">
-          <div style="text-align:center; margin-bottom: 2px;">
-            <div style="font-size: 10px; font-weight: 900; color: #1e40af; text-shadow: 0 0 2px #fff;">VALOR: ${cardDesign.valorCartela || 'R$ ---'}</div>
+        <div style="position: absolute; top: 42mm; left: 10mm; width: 58mm;">
+          <div style="text-align:center; margin-bottom: 1mm;">
+            <div style="font-size: 10pt; font-weight: 900; color: #1e40af; text-shadow: 0 0 2px #fff;">VALOR: ${cardDesign.valorCartela || 'R$ ---'}</div>
           </div>
           ${grade(true)}
         </div>
@@ -1479,7 +1476,7 @@ function buildPrintArea(cards) {
 
       // 2. 1º PRÊMIO (Canto Superior Central)
       html += `
-        <div style="position: absolute; top: 27%; left: 36%; width: 28%;">
+        <div style="position: absolute; top: 42mm; left: 76mm; width: 58mm;">
           ${txtPremio(1, 'CARTELA CHEIA', cardDesign.premio1)}
           ${grade(false)}
         </div>
@@ -1487,7 +1484,7 @@ function buildPrintArea(cards) {
 
       // 3. 2º PRÊMIO (Canto Superior Direito)
       html += `
-        <div style="position: absolute; top: 27%; left: 68%; width: 28%;">
+        <div style="position: absolute; top: 42mm; left: 142mm; width: 58mm;">
           ${txtPremio(2, 'QUINA', cardDesign.premio2)}
           ${grade(false)}
         </div>
@@ -1495,7 +1492,7 @@ function buildPrintArea(cards) {
 
       // 4. 3º PRÊMIO (Canto Inferior Esquerdo)
       html += `
-        <div style="position: absolute; top: 62%; left: 4%; width: 28%;">
+        <div style="position: absolute; top: 162mm; left: 10mm; width: 58mm;">
           ${txtPremio(3, 'QUINA', cardDesign.premio3)}
           ${grade(false)}
         </div>
@@ -1503,7 +1500,7 @@ function buildPrintArea(cards) {
 
       // 5. 4º PRÊMIO (Canto Inferior Central)
       html += `
-        <div style="position: absolute; top: 62%; left: 36%; width: 28%;">
+        <div style="position: absolute; top: 162mm; left: 76mm; width: 58mm;">
           ${txtPremio(4, 'QUINA', cardDesign.premio4)}
           ${grade(false)}
         </div>
@@ -1511,14 +1508,14 @@ function buildPrintArea(cards) {
 
       // 6. 5º PRÊMIO (Canto Inferior Direito)
       html += `
-        <div style="position: absolute; top: 62%; left: 68%; width: 28%;">
+        <div style="position: absolute; top: 162mm; left: 142mm; width: 58mm;">
           ${txtPremio(5, 'QUINA', cardDesign.premio5)}
           ${grade(false)}
         </div>
       `;
 
       // Número da Cartela no rodapé esquerdo para controle
-      html += `<div style="position: absolute; bottom: 2%; left: 2%; font-size: 10px; font-weight: bold; color: #000; background: rgba(255,255,255,0.8); padding: 2px 4px; border-radius: 4px;">Nº ${card.number}</div>`;
+      html += `<div style="position: absolute; bottom: 5mm; left: 10mm; font-size: 10pt; font-weight: bold; color: #000; background: rgba(255,255,255,0.9); padding: 1mm 2mm; border-radius: 1mm; border: 0.5mm solid #000;">Nº ${card.number}</div>`;
 
       page.innerHTML = html;
       area.appendChild(page);
