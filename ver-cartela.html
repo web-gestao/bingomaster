@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0e1a">
+<title>Ver Cartela — BingoMaster</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230a0e1a'/><text y='.9em' font-size='80' x='10'>🎱</text></svg>">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: linear-gradient(160deg, #0a0e1a 0%, #1a2340 100%);
+  background-attachment: fixed;
+  color: #e8ecf5;
+  min-height: 100vh;
+  padding: 20px 16px calc(40px + env(safe-area-inset-bottom));
+  padding-top: calc(20px + env(safe-area-inset-top));
+}
+.header { text-align: center; margin-bottom: 24px; padding-top: 10px; }
+.header .logo { font-size: 2rem; font-weight: 900; letter-spacing: 3px; background: linear-gradient(135deg, #fbbf24, #4a9eff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 6px; }
+.header .sub { font-size: 0.85rem; color: #8892b0; }
+.card { background: #131a2b; border: 1px solid #2a3556; border-radius: 20px; padding: 24px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); max-width: 500px; margin: 0 auto; }
+.status-loading { text-align: center; padding: 40px 20px; }
+.status-loading .spinner { display: inline-block; width: 40px; height: 40px; border: 4px solid #2a3556; border-top-color: #4a9eff; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.status-error { text-align: center; padding: 40px 20px; }
+.status-error .icon { font-size: 3rem; margin-bottom: 16px; }
+.status-error .title { font-size: 1.2rem; font-weight: 800; color: #ef4444; margin-bottom: 12px; }
+.status-error .msg { color: #8892b0; font-size: 0.9rem; line-height: 1.5; }
+.card-header-info { text-align: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px dashed #2a3556; }
+.card-header-info .id { font-size: 1.8rem; font-weight: 900; color: #fbbf24; letter-spacing: 2px; margin-bottom: 8px; }
+.card-header-info .status-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+.card-header-info .status-badge.sold { background: rgba(34,197,94,0.2); color: #22c55e; border: 1px solid #22c55e; }
+.card-header-info .status-badge.unsold { background: rgba(239,68,68,0.2); color: #ef4444; border: 1px solid #ef4444; }
+.player-info { background: #1c2540; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.player-info .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #2a3556; }
+.player-info .row:last-child { border-bottom: none; }
+.player-info .row .label { color: #8892b0; font-size: 0.85rem; }
+.player-info .row .value { font-weight: 700; color: #e8ecf5; font-size: 0.9rem; text-align: right; max-width: 60%; word-break: break-word; }
+.no-player { text-align: center; padding: 20px; color: #8892b0; font-size: 0.9rem; }
+.progress-box { background: #1c2540; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.progress-box .title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: #8892b0; font-weight: 700; margin-bottom: 10px; text-align: center; }
+.progress-box .big { font-size: 2.5rem; font-weight: 900; text-align: center; margin: 8px 0; }
+.progress-box .big.ok { color: #22c55e; }
+.progress-box .big.warn { color: #fbbf24; }
+.progress-box .big.info { color: #4a9eff; }
+.progress-box .subtitle { font-size: 0.85rem; color: #8892b0; text-align: center; margin-top: 4px; }
+.grid-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: #8892b0; font-weight: 700; margin-bottom: 10px; text-align: center; }
+.bingo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-bottom: 16px; }
+.cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.95rem; border-radius: 6px; background: #1c2540; border: 1.5px solid #2a3556; color: #e8ecf5; }
+.cell.head { background: #263156; font-size: 1.1rem; }
+.cell.head.B { background: #3b82f6; color: white; }
+.cell.head.I { background: #ef4444; color: white; }
+.cell.head.N { background: #22c55e; color: white; }
+.cell.head.G { background: #fbbf24; color: #1a1a1a; }
+.cell.head.O { background: #a855f7; color: white; }
+.cell.free { background: #a855f7; color: white; font-size: 0.7rem; }
+.cell.marked { background: #22c55e; color: white; border-color: #16a34a; box-shadow: 0 0 8px rgba(34,197,94,0.5); }
+.footer { text-align: center; margin-top: 24px; padding-top: 20px; border-top: 1px dashed #2a3556; font-size: 0.75rem; color: #8892b0; max-width: 500px; margin-left: auto; margin-right: auto; }
+.refresh-btn { width: 100%; padding: 14px; border: 1px solid #2a3556; border-radius: 12px; background: #1c2540; color: #e8ecf5; font-weight: 700; font-size: 0.9rem; cursor: pointer; margin-top: 8px; }
+.refresh-btn:active { transform: scale(0.97); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">🎱 BINGOMASTER</div>
+  <div class="sub">Consulta de Cartela</div>
+</div>
+
+<div class="card" id="app">
+  <div class="status-loading">
+    <div class="spinner"></div>
+    <div style="color:#8892b0;">Carregando informações...</div>
+  </div>
+</div>
+
+<div class="footer">
+  🔒 Consulta pública — dados do operador
+</div>
+
+<script>
+const SUPABASE_URL = 'https://oqzauaykcrnzisrbsjsm.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xemF1YXlrY3JuemlzcmJzanNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMTkxMzUsImV4cCI6MjEwNTU5NTEzNX0.KbXCq6Cudl92z7neB34k5-L_nTmT3IXn6dcX1Sp88qE';
+
+function escapeHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function getParam(name) {
+  const url = new URL(window.location.href);
+  return url.searchParams.get(name);
+}
+
+async function carregar() {
+  const app = document.getElementById('app');
+  const idCartela = (getParam('id') || '').trim().toUpperCase();
+
+  if (!idCartela) {
+    app.innerHTML = '<div class="status-error"><div class="icon">❓</div><div class="title">Cartela não informada</div><div class="msg">Escaneie o código de barras da cartela ou use um link com <code>?id=BM-0001</code></div></div>';
+    return;
+  }
+
+  const idBuscado = idCartela.replace(/^BM[-\s]?/i, '');
+  const numero = parseInt(idBuscado, 10);
+  const idNormalizado = !isNaN(numero) && numero > 0 ? 'BM-' + String(numero).padStart(4, '0') : idCartela;
+
+  try {
+    // Busca o cadastro no Supabase
+    const res = await fetch(SUPABASE_URL + '/rest/v1/cadastros?cartela_id=eq.' + encodeURIComponent(idNormalizado) + '&select=*&limit=1', {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const dados = await res.json();
+    const cadastro = Array.isArray(dados) && dados.length > 0 ? dados[0] : null;
+
+    // Tenta pegar dados locais (caso esteja no mesmo navegador do operador)
+    let dadosLocais = null;
+    try {
+      const st = JSON.parse(localStorage.getItem('bm_state_v1') || 'null');
+      if (st && st.cards) {
+        dadosLocais = st.cards.find(c => c.id === idNormalizado) || null;
+      }
+    } catch(e) {}
+
+    renderizar(app, idNormalizado, cadastro, dadosLocais);
+  } catch (err) {
+    console.error(err);
+    app.innerHTML = '<div class="status-error"><div class="icon">⚠️</div><div class="title">Erro ao carregar</div><div class="msg">Verifique sua conexão e tente novamente.</div><button class="refresh-btn" onclick="location.reload()">🔄 Tentar novamente</button></div>';
+  }
+}
+
+function renderizar(app, idCartela, cadastro, dadosLocais) {
+  const vendida = !!cadastro || (dadosLocais && dadosLocais.sold);
+
+  // Cabeçalho
+  let html = '<div class="card-header-info">';
+  html += '<div class="id">' + escapeHtml(idCartela) + '</div>';
+  if (vendida) html += '<div class="status-badge sold">✅ Vendida</div>';
+  else html += '<div class="status-badge unsold">❌ Não vendida</div>';
+  html += '</div>';
+
+  // Info do jogador
+  const jogador = cadastro ? {
+    nome: cadastro.nome, cidade: cadastro.cidade, telefone: cadastro.telefone, obs: cadastro.observacao
+  } : (dadosLocais ? {
+    nome: dadosLocais.player.name, cidade: dadosLocais.player.city, telefone: dadosLocais.player.phone, obs: ''
+  } : null);
+
+  if (jogador && (jogador.nome || jogador.telefone)) {
+    html += '<div class="player-info">';
+    html += '<div class="row"><span class="label">👤 Nome</span><span class="value">' + escapeHtml(jogador.nome || '—') + '</span></div>';
+    html += '<div class="row"><span class="label">📍 Cidade</span><span class="value">' + escapeHtml(jogador.cidade || '—') + '</span></div>';
+    html += '<div class="row"><span class="label">📞 Telefone</span><span class="value">' + escapeHtml(jogador.telefone || '—') + '</span></div>';
+    if (jogador.obs) html += '<div class="row"><span class="label">📝 Obs</span><span class="value">' + escapeHtml(jogador.obs) + '</span></div>';
+    html += '</div>';
+  } else {
+    html += '<div class="player-info no-player">📭 Cartela não vendida — ainda disponível</div>';
+  }
+
+  // Progresso (só se tiver dados locais)
+  if (dadosLocais) {
+    const grid = montarGrid(dadosLocais);
+    const bolasSorteadas = JSON.parse(localStorage.getItem('bm_state_v1') || '{}').drawnSet || [];
+    let marcados = 0;
+    grid.forEach(row => row.forEach(cell => {
+      if (cell === 'FREE') return;
+      const n = parseInt(cell);
+      let l; if (n <= 15) l = 'B'; else if (n <= 30) l = 'I'; else if (n <= 45) l = 'N'; else if (n <= 60) l = 'G'; else l = 'O';
+      const k = l + '-' + String(n).padStart(2, '0');
+      if (bolasSorteadas.includes(k)) marcados++;
+    }));
+
+    html += '<div class="progress-box">';
+    html += '<div class="title">📊 Progresso do Bingo</div>';
+    html += '<div class="big ' + (marcados >= 20 ? 'ok' : (marcados >= 10 ? 'warn' : 'info')) + '">' + marcados + '/24</div>';
+    html += '<div class="subtitle">números marcados até agora</div>';
+    html += '</div>';
+  }
+
+  // Grid da cartela (só se tiver dados locais)
+  if (dadosLocais) {
+    const grid = montarGrid(dadosLocais);
+    const bolasSorteadas = JSON.parse(localStorage.getItem('bm_state_v1') || '{}').drawnSet || [];
+    html += '<div class="grid-title">🎯 Cartela</div>';
+    html += '<div class="bingo-grid">';
+    ['B','I','N','G','O'].forEach(l => { html += '<div class="cell head ' + l + '">' + l + '</div>'; });
+    grid.forEach(row => row.forEach(cell => {
+      if (cell === 'FREE') { html += '<div class="cell free">FREE</div>'; }
+      else {
+        const n = parseInt(cell);
+        let l; if (n <= 15) l = 'B'; else if (n <= 30) l = 'I'; else if (n <= 45) l = 'N'; else if (n <= 60) l = 'G'; else l = 'O';
+        const k = l + '-' + String(n).padStart(2, '0');
+        const marcada = bolasSorteadas.includes(k);
+        html += '<div class="cell ' + (marcada ? 'marked' : '') + '">' + String(cell).padStart(2, '0') + '</div>';
+      }
+    }));
+    html += '</div>';
+  }
+
+  html += '<button class="refresh-btn" onclick="location.reload()">🔄 Atualizar</button>';
+
+  app.innerHTML = html;
+}
+
+function montarGrid(card) {
+  const rows = [];
+  for (let r = 0; r < 5; r++) rows.push([card.B[r], card.I[r], card.N[r], card.G[r], card.O[r]]);
+  return rows;
+}
+
+carregar();
+</script>
+</body>
+</html>

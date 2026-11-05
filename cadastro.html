@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BingoMaster">
+<title>Cadastro — BingoMaster</title>
+<link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;BingoMaster Cadastro&quot;,&quot;short_name&quot;:&quot;BingoMaster&quot;,&quot;start_url&quot;:&quot;./index.html&quot;,&quot;scope&quot;:&quot;./&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;orientation&quot;:&quot;portrait&quot;,&quot;background_color&quot;:&quot;%230a0e1a&quot;,&quot;theme_color&quot;:&quot;%230a0e1a&quot;,&quot;lang&quot;:&quot;pt-BR&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='96' fill='%230a0e1a'/%3E%3Ctext x='256' y='380' font-size='320' text-anchor='middle'%3E%F0%9F%8E%B1%3C/text%3E%3C/svg%3E&quot;,&quot;sizes&quot;:&quot;512x512&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;,&quot;purpose&quot;:&quot;any maskable&quot;}]}">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230a0e1a'/><text y='.9em' font-size='80' x='10'>🎱</text></svg>">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { overscroll-behavior: none; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: linear-gradient(160deg, #0a0e1a 0%, #1a2340 100%);
+  background-attachment: fixed;
+  color: #e8ecf5;
+  min-height: 100vh;
+  padding: 20px 16px calc(40px + env(safe-area-inset-bottom));
+  padding-top: calc(20px + env(safe-area-inset-top));
+}
+#pwa-banner { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: linear-gradient(135deg, #4a9eff, #6d4aff); color: white; padding: 14px 18px; z-index: 999; box-shadow: 0 -4px 20px rgba(0,0,0,0.4); align-items: center; gap: 12px; }
+#pwa-banner.show { display: flex; }
+#pwa-banner .txt { flex: 1; font-size: 0.9rem; line-height: 1.3; }
+#pwa-banner .txt strong { display: block; font-size: 1rem; margin-bottom: 2px; }
+#pwa-banner button { background: white; color: #4a9eff; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 800; font-size: 0.85rem; cursor: pointer; white-space: nowrap; }
+#pwa-banner button.close { background: transparent; color: white; padding: 4px 8px; font-size: 1.2rem; }
+#offline-badge { display: none; text-align: center; padding: 8px; background: rgba(239,68,68,0.2); color: #ef4444; border-radius: 8px; font-size: 0.8rem; font-weight: 700; margin-bottom: 16px; border: 1px solid #ef4444; }
+#offline-badge.show { display: block; }
+.queue-info { display: none; text-align: center; padding: 10px; background: rgba(251,191,36,0.15); color: #fbbf24; border-radius: 8px; font-size: 0.8rem; font-weight: 700; margin-bottom: 16px; border: 1px solid #fbbf24; }
+.queue-info.show { display: block; }
+.header { text-align: center; margin-bottom: 24px; padding-top: 10px; }
+.header .logo { font-size: 2.2rem; font-weight: 900; letter-spacing: 3px; background: linear-gradient(135deg, #fbbf24, #4a9eff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 6px; }
+.header .sub { font-size: 0.9rem; color: #8892b0; }
+.card { background: #131a2b; border: 1px solid #2a3556; border-radius: 20px; padding: 24px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); max-width: 500px; margin: 0 auto; }
+.form-group { margin-bottom: 18px; }
+.form-group label { display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #8892b0; margin-bottom: 8px; font-weight: 700; }
+.form-group input, .form-group textarea { width: 100%; padding: 14px 16px; background: #1c2540; border: 1.5px solid #2a3556; border-radius: 12px; color: #e8ecf5; font-size: 16px; transition: all 0.2s; }
+.form-group input:focus, .form-group textarea:focus { outline: none; border-color: #4a9eff; box-shadow: 0 0 0 3px rgba(74,158,255,0.3); }
+.form-group textarea { resize: vertical; min-height: 70px; }
+.form-group input.verificando { border-color: #fbbf24; }
+.form-group input.disponivel { border-color: #22c55e; box-shadow: 0 0 0 3px rgba(34,197,94,0.2); }
+.form-group input.indisponivel { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.2); }
+.input-hint { font-size: 0.75rem; margin-top: 6px; min-height: 18px; display: block; }
+.input-hint.checking { color: #fbbf24; }
+.input-hint.available { color: #22c55e; }
+.input-hint.unavailable { color: #ef4444; font-weight: 700; }
+.btn { width: 100%; padding: 16px; border: none; border-radius: 12px; background: linear-gradient(135deg, #22c55e, #16a34a); color: white; font-size: 1rem; font-weight: 800; letter-spacing: 1px; cursor: pointer; transition: all 0.15s; margin-top: 8px; text-transform: uppercase; }
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-secondary { background: #1c2540; border: 1.5px solid #2a3556; color: #e8ecf5; margin-top: 10px; }
+.status { text-align: center; padding: 14px; border-radius: 12px; font-size: 0.9rem; margin-top: 16px; display: none; line-height: 1.4; }
+.status.success { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid #22c55e; display: block; }
+.status.error { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid #ef4444; display: block; }
+.status.loading { background: rgba(74,158,255,0.15); color: #4a9eff; border: 1px solid #4a9eff; display: block; }
+.status.warning { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid #fbbf24; display: block; }
+.success-screen { display: none; text-align: center; padding: 40px 20px; }
+.success-screen.show { display: block; }
+.success-icon { font-size: 4rem; margin-bottom: 16px; }
+.success-title { font-size: 1.5rem; font-weight: 800; color: #22c55e; margin-bottom: 12px; }
+.success-msg { color: #8892b0; line-height: 1.6; margin-bottom: 24px; }
+.success-msg strong { color: #e8ecf5; }
+.footer-info { text-align: center; font-size: 0.75rem; color: #8892b0; margin-top: 24px; padding-top: 20px; border-top: 1px dashed #2a3556; max-width: 500px; margin-left: auto; margin-right: auto; }
+.required::after { content: ' *'; color: #ef4444; }
+</style>
+</head>
+<body>
+
+<div id="offline-badge">📴 Você está offline — o cadastro será enviado quando voltar a conexão</div>
+<div class="queue-info" id="queue-info"></div>
+
+<div class="header">
+  <div class="logo">🎱 BINGOMASTER</div>
+  <div class="sub">Cadastro de Jogador</div>
+</div>
+
+<div class="card" id="form-card">
+  <div class="form-group">
+    <label class="required" for="cartela">Número da cartela</label>
+    <input type="text" id="cartela" placeholder="Ex: 10 ou BM-0010" inputmode="numeric" oninput="verificarCartela()" onblur="verificarCartela()">
+    <span class="input-hint" id="cartela-hint"></span>
+  </div>
+  <div class="form-group">
+    <label class="required" for="nome">Nome completo</label>
+    <input type="text" id="nome" placeholder="Digite seu nome" autocomplete="name">
+  </div>
+  <div class="form-group">
+    <label class="required" for="telefone">Telefone / WhatsApp</label>
+    <input type="tel" id="telefone" placeholder="(00) 00000-0000" autocomplete="tel">
+  </div>
+  <div class="form-group">
+    <label for="cidade">Cidade</label>
+    <input type="text" id="cidade" placeholder="Sua cidade" autocomplete="address-level2">
+  </div>
+  <div class="form-group">
+    <label for="vendedor">Vendedor</label>
+    <input type="text" id="vendedor" placeholder="Nome do vendedor" autocomplete="off">
+  </div>
+  <div class="form-group">
+    <label for="observacao">Observação</label>
+    <textarea id="observacao" placeholder="Alguma informação adicional..."></textarea>
+  </div>
+  <button class="btn" id="btn-enviar" onclick="enviarCadastro()">✅ ENVIAR CADASTRO</button>
+  <div class="status" id="status"></div>
+</div>
+
+<div class="success-screen" id="success-screen">
+  <div class="success-icon">🎉</div>
+  <div class="success-title">Cadastro realizado!</div>
+  <div class="success-msg" id="success-msg">Seus dados foram enviados com sucesso.</div>
+  <button class="btn btn-secondary" onclick="novoCadastro()">➕ Cadastrar outra pessoa</button>
+</div>
+
+<div class="footer-info">🔒 Seus dados são enviados de forma segura.</div>
+
+<div id="pwa-banner">
+  <div class="txt">
+    <strong>📲 Instalar app</strong>
+    Adicione à tela inicial para acesso rápido
+  </div>
+  <button onclick="instalarPWA()">INSTALAR</button>
+  <button class="close" onclick="fecharBannerPWA()">✕</button>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://oqzauaykcrnzisrbsjsm.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xemF1YXlrY3JuemlzcmJzanNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMTkxMzUsImV4cCI6MjEwNTU5NTEzNX0.KbXCq6Cudl92z7neB34k5-L_nTmT3IXn6dcX1Sp88qE';
+const API_URL = `${SUPABASE_URL}/rest/v1/cadastros`;
+const HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
+
+let cartelaStatus = 'idle';
+let verificarCartelaTimeout = null;
+let ultimaCartelaVerificada = '';
+
+function normalizarCartela(valor) {
+  const v = (valor || '').trim().toUpperCase();
+  if (!v) return null;
+  const limpo = v.replace(/^BM[-\s]?/i, '').trim();
+  const numero = parseInt(limpo, 10);
+  if (isNaN(numero) || numero < 1 || numero > 9999) return null;
+  return 'BM-' + String(numero).padStart(4, '0');
+}
+
+function setCartelaHint(tipo, texto) {
+  const hint = document.getElementById('cartela-hint');
+  const input = document.getElementById('cartela');
+  hint.className = 'input-hint ' + tipo;
+  hint.textContent = texto;
+  input.classList.remove('verificando', 'disponivel', 'indisponivel');
+  if (tipo === 'checking') input.classList.add('verificando');
+  if (tipo === 'available') input.classList.add('disponivel');
+  if (tipo === 'unavailable') input.classList.add('indisponivel');
+}
+
+function verificarCartela() {
+  clearTimeout(verificarCartelaTimeout);
+  const valor = document.getElementById('cartela').value.trim();
+  if (!valor) { cartelaStatus = 'idle'; setCartelaHint('', ''); return; }
+  const normalizado = normalizarCartela(valor);
+  if (!normalizado) { cartelaStatus = 'invalid'; setCartelaHint('unavailable', '⚠️ Número inválido (use de 1 a 9999)'); return; }
+  if (normalizado === ultimaCartelaVerificada && cartelaStatus === 'available') return;
+  cartelaStatus = 'checking';
+  setCartelaHint('checking', '⏳ Verificando se está disponível...');
+  verificarCartelaTimeout = setTimeout(() => { consultarCartela(normalizado); }, 600);
+}
+
+async function consultarCartela(cartelaId) {
+  ultimaCartelaVerificada = cartelaId;
+  if (!navigator.onLine) { cartelaStatus = 'idle'; setCartelaHint('', '📴 Sem internet para verificar'); return; }
+  try {
+    const res = await fetch(`${API_URL}?cartela_id=eq.${encodeURIComponent(cartelaId)}&select=id,nome,telefone`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const dados = await res.json();
+    if (cartelaStatus !== 'checking') return;
+    if (Array.isArray(dados) && dados.length > 0) {
+      cartelaStatus = 'unavailable';
+      const quem = dados[0].nome ? ` (já cadastrada por ${dados[0].nome})` : '';
+      setCartelaHint('unavailable', `❌ Cartela ${cartelaId} indisponível${quem}`);
+    } else {
+      cartelaStatus = 'available';
+      setCartelaHint('available', `✅ Cartela ${cartelaId} disponível!`);
+    }
+  } catch (err) {
+    console.warn('Erro ao verificar cartela:', err);
+    cartelaStatus = 'idle';
+    setCartelaHint('', '⚠️ Não foi possível verificar. Você ainda pode enviar.');
+  }
+}
+
+async function enviarCadastro() {
+  const cartelaRaw = document.getElementById('cartela').value.trim();
+  const cartelaId = cartelaRaw ? normalizarCartela(cartelaRaw) : null;
+
+  // Validações — Número da cartela, Nome e Telefone são OBRIGATÓRIOS
+  if (!cartelaRaw) return mostrarStatus('error', '⚠️ Por favor, informe o número da cartela.');
+  if (!cartelaId) return mostrarStatus('error', '⚠️ O número da cartela é inválido. Use de 1 a 9999.');
+  if (cartelaStatus === 'checking') return mostrarStatus('error', '⏳ Aguarde a verificação da cartela.');
+  if (cartelaStatus === 'unavailable') return mostrarStatus('error', `❌ Esta cartela já está cadastrada. Escolha outra.`);
+
+  const dados = {
+    nome: document.getElementById('nome').value.trim(),
+    cidade: document.getElementById('cidade').value.trim(),
+    telefone: document.getElementById('telefone').value.trim(),
+    vendedor: document.getElementById('vendedor').value.trim(),
+    cartela_id: cartelaId,
+    observacao: document.getElementById('observacao').value.trim() || null
+  };
+
+  if (!dados.nome) return mostrarStatus('error', '⚠️ Por favor, informe seu nome.');
+  if (!dados.telefone) return mostrarStatus('error', '⚠️ Por favor, informe seu telefone.');
+
+  const btn = document.getElementById('btn-enviar');
+  btn.disabled = true;
+
+  if (!navigator.onLine) {
+    salvarNaFila(dados);
+    mostrarSucesso(dados.nome, '(será enviado quando voltar a conexão)');
+    return;
+  }
+
+  mostrarStatus('loading', '⏳ Enviando cadastro...');
+  const resultado = await enviarParaServidor(dados);
+
+  if (resultado.ok) {
+    mostrarSucesso(dados.nome);
+    salvarLocal(dados);
+  } else if (resultado.status === 409) {
+    cartelaStatus = 'unavailable';
+    setCartelaHint('unavailable', `❌ Cartela ${cartelaId} já foi cadastrada`);
+    mostrarStatus('error', `❌ Essa cartela acabou de ser ocupada. Escolha outra.`);
+    btn.disabled = false;
+    setTimeout(() => verificarCartela(), 500);
+  } else {
+    salvarNaFila(dados);
+    mostrarStatus('warning', '📴 Sem conexão. Cadastro salvo e será enviado automaticamente.');
+    setTimeout(() => mostrarSucesso(dados.nome, '(na fila para envio)'), 2500);
+  }
+}
+
+async function enviarParaServidor(dados) {
+  try {
+    if (dados.cartela_id) {
+      const check = await fetch(`${API_URL}?cartela_id=eq.${encodeURIComponent(dados.cartela_id)}&select=id`, { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+      if (check.ok) {
+        const existentes = await check.json();
+        if (Array.isArray(existentes) && existentes.length > 0) return { ok: false, status: 409 };
+      }
+    }
+    const res = await fetch(API_URL, { method: 'POST', headers: HEADERS, body: JSON.stringify(dados) });
+    if (res.status === 409 || res.status === 400) {
+      const txt = await res.text();
+      if (txt.includes('duplicate') || txt.includes('unique') || txt.includes('already exists')) return { ok: false, status: 409 };
+    }
+    return { ok: res.ok, status: res.status };
+  } catch (err) {
+    return { ok: false, status: 0 };
+  }
+}
+
+function mostrarSucesso(nome, extra = '') {
+  document.getElementById('form-card').style.display = 'none';
+  document.getElementById('success-screen').classList.add('show');
+  document.getElementById('success-msg').innerHTML = `Obrigado, <strong>${escapeHtml(nome)}</strong>!<br>Seus dados foram registrados ${extra}.<br><br>Aguarde as instruções do operador. 🎱`;
+}
+
+function mostrarStatus(tipo, msg) {
+  const el = document.getElementById('status');
+  el.className = 'status ' + tipo;
+  el.textContent = msg;
+}
+
+function novoCadastro() {
+  document.getElementById('form-card').style.display = 'block';
+  document.getElementById('success-screen').classList.remove('show');
+  ['nome','cidade','telefone','vendedor','cartela','observacao'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('status').className = 'status';
+  document.getElementById('cartela-hint').textContent = '';
+  document.getElementById('cartela-hint').className = 'input-hint';
+  document.getElementById('cartela').className = '';
+  cartelaStatus = 'idle';
+  ultimaCartelaVerificada = '';
+  document.getElementById('btn-enviar').disabled = false;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function salvarNaFila(dados) {
+  try {
+    const fila = JSON.parse(localStorage.getItem('bm_fila') || '[]');
+    fila.push({ ...dados, tentativa: 0, criado: Date.now() });
+    localStorage.setItem('bm_fila', JSON.stringify(fila));
+    atualizarAvisoFila();
+  } catch(e) {}
+}
+
+function salvarLocal(dados) {
+  try {
+    const meus = JSON.parse(localStorage.getItem('bm_meus_cadastros') || '[]');
+    meus.push({ ...dados, quando: new Date().toISOString() });
+    localStorage.setItem('bm_meus_cadastros', JSON.stringify(meus));
+  } catch(e) {}
+}
+
+async function processarFila() {
+  const fila = JSON.parse(localStorage.getItem('bm_fila') || '[]');
+  if (fila.length === 0) return;
+  const restantes = [];
+  for (const item of fila) {
+    const { tentativa, criado, ...dados } = item;
+    const resultado = await enviarParaServidor(dados);
+    if (resultado.ok || resultado.status === 409) continue;
+    restantes.push({ ...item, tentativa: tentativa + 1 });
+  }
+  localStorage.setItem('bm_fila', JSON.stringify(restantes));
+  atualizarAvisoFila();
+}
+
+function atualizarAvisoFila() {
+  const fila = JSON.parse(localStorage.getItem('bm_fila') || '[]');
+  const el = document.getElementById('queue-info');
+  if (fila.length > 0) { el.classList.add('show'); el.textContent = `⏳ ${fila.length} cadastro(s) na fila aguardando conexão`; }
+  else el.classList.remove('show');
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+}
+
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault(); deferredPrompt = e;
+  const dispensado = localStorage.getItem('bm_pwa_dispensado');
+  if (!dispensado || Date.now() - parseInt(dispensado) > 7 * 24 * 60 * 60 * 1000) document.getElementById('pwa-banner').classList.add('show');
+});
+async function instalarPWA() {
+  if (!deferredPrompt) { alert('Para instalar:\n\n📱 Android (Chrome): Menu ⋮ → "Adicionar à tela inicial"\n\n🍎 iPhone (Safari): Compartilhar → "Adicionar à Tela de Início"'); return; }
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') document.getElementById('pwa-banner').classList.remove('show');
+  deferredPrompt = null;
+}
+function fecharBannerPWA() { document.getElementById('pwa-banner').classList.remove('show'); localStorage.setItem('bm_pwa_dispensado', String(Date.now())); }
+
+window.addEventListener('online', () => { document.getElementById('offline-badge').classList.remove('show'); processarFila(); });
+window.addEventListener('offline', () => { document.getElementById('offline-badge').classList.add('show'); });
+if (!navigator.onLine) document.getElementById('offline-badge').classList.add('show');
+
+atualizarAvisoFila();
+if (navigator.onLine) processarFila();
+setInterval(() => { if (navigator.onLine) processarFila(); }, 30000);
+</script>
+</body>
+</html>
