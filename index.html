@@ -805,8 +805,10 @@ input, select, textarea { font-family: inherit; }
 const SUPABASE_URL = 'https://oqzauaykcrnzisrbsjsm.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xemF1YXlrY3JuemlzcmJzanNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMTkxMzUsImV4cCI6MjEwNTU5NTEzNX0.KbXCq6Cudl92z7neB34k5-L_nTmT3IXn6dcX1Sp88qE';
 
-const NETLIFY_DOMAIN = 'https://bingomaster-painel.pages.dev';
-const CADASTRO_DOMAIN = 'https://cadastro-bingomaster.galvacaio18.workers.dev/cadastro.html';
+// ALTERAÇÃO 1: URL do domínio principal do GitHub Pages
+const NETLIFY_DOMAIN = 'https://web-gestao.github.io/Bingomaster';
+// ALTERAÇÃO 2: URL do cadastro no GitHub Pages
+const CADASTRO_DOMAIN = 'https://web-gestao.github.io/Bingomaster/cadastro.html';
 
 function loadCredentials() {
   try { const s = JSON.parse(localStorage.getItem('bm_credentials') || 'null'); if (s && s.user && s.pass) return s; } catch(e) {}
@@ -972,8 +974,9 @@ function updateDesignPreview() {
   renderPreview();
 }
 
+// ALTERAÇÃO 3: Função que gera o link do QR Code para abrir a cartela do jogador
 function gerarLinkCodigo(idCartela) {
-  return NETLIFY_DOMAIN + '/painel.html?modo=public';
+  return NETLIFY_DOMAIN + '/ver-cartela.html?id=' + idCartela;
 }
 function urlQRCode(texto, tamanho) {
   tamanho = tamanho || 200;
