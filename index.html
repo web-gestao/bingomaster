@@ -501,6 +501,7 @@ input, select, textarea { font-family: inherit; }
             <label class="pattern-toggle"><input type="radio" name="layout-tipo" value="eletronico" checked onchange="setLayout('eletronico')"> <b>Eletrônico (2 cartelas + 2 fichas por A4)</b></label>
             <label class="pattern-toggle"><input type="radio" name="layout-tipo" value="matriz_premios" onchange="setLayout('matriz_premios')"> <b>Matriz + 5 Prêmios (Arte Canva)</b></label>
             <label class="pattern-toggle"><input type="radio" name="layout-tipo" value="tres_cartelas_arte" onchange="setLayout('tres_cartelas_arte')"> <b>3 Cartelas Grandes (Arte Base - 2 cima, 1 baixo)</b></label>
+            <label class="pattern-toggle"><input type="radio" name="layout-tipo" value="profissional_acessivel" onchange="setLayout('profissional_acessivel')"> <b>Cartela Profissional Acessível (2 por A4 com Canhoto)</b></label>
           </div>
         </div>
 
@@ -815,6 +816,8 @@ input, select, textarea { font-family: inherit; }
 const SUPABASE_URL = 'https://oqzauaykcrnzisrbsjsm.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xemF1YXlrY3JuemlzcmJzanNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMTkxMzUsImV4cCI6MjEwNTU5NTEzNX0.KbXCq6Cudl92z7neB34k5-L_nTmT3IXn6dcX1Sp88qE';
 
+// ALTERAÇÃO PARA CORRIGIR O ERRO DO "B" MAIÚSCULO
+// Forçando o link a ser todo em minúsculo
 const NETLIFY_DOMAIN = 'https://web-gestao.github.io/bingomaster';
 const CADASTRO_DOMAIN = 'https://web-gestao.github.io/bingomaster/cadastro.html';
 
@@ -1127,6 +1130,30 @@ async function publicarJogadoresNuvem(silencioso) {
 /* ============ PREVIEW ============ */
 function renderPreview() {
   const p = document.getElementById('card-preview'); if (!p) return;
+
+  // PREVIEW DO LAYOUT PROFISSIONAL ACESSÍVEL
+  if (cardDesign.layout === 'profissional_acessivel') {
+    let html = `<div style="position: relative; width: 100%; aspect-ratio: 210 / 297; background: #fff; border: 2px solid #ccc; border-radius: 4px; overflow: hidden; padding: 5mm; display: flex; flex-direction: column; gap: 5mm;">`;
+    
+    const miniBloco = (num) => `
+      <div style="border: 1px solid #000; flex: 1; display: flex; flex-direction: column; padding: 2mm;">
+        <div style="text-align: center; border-bottom: 1px solid #000; margin-bottom: 2mm; padding-bottom: 2mm;">
+          <div style="font-size: 8px; font-weight: bold; color: #1e40af;">BINGO</div>
+          <div style="font-size: 7px; font-weight: bold;">CARTELA Nº ${num}</div>
+        </div>
+        <div style="flex: 1; background: #f0f0f0; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #666;">GRADE NUMÉRICA</div>
+        <div style="text-align: center; font-size: 5px; margin-top: 2mm; border-top: 1px dashed #000; padding-top: 2mm;">PREMIAÇÕES</div>
+      </div>
+      <div style="height: 15mm; border: 1px dashed #333; background: #f9f9f9; padding: 1mm; display: flex; align-items: center; justify-content: center; font-size: 5px;">
+        CANHOTO DE CADASTRO
+      </div>
+    `;
+
+    html += miniBloco('1') + miniBloco('2');
+    html += '</div>';
+    p.innerHTML = html;
+    return;
+  }
 
   // PREVIEW DO NOVO LAYOUT: 3 CARTELAS GRANDES
   if (cardDesign.layout === 'tres_cartelas_arte') {
@@ -1460,6 +1487,81 @@ function buildPrintArea(cards) {
   const area = document.getElementById('print-area');
   area.innerHTML = '';
   
+  // ---- LAYOUT PROFISSIONAL ACESSÍVEL (2 por A4 com Canhoto) ----
+  if (cardDesign.layout === 'profissional_acessivel') {
+    for (let i = 0; i < cards.length; i += 2) {
+      const card1 = cards[i];
+      const card2 = cards[i + 1];
+
+      const page = document.createElement('div');
+      page.className = 'print-card';
+      page.style.cssText = 'width: 210mm; height: 297mm; background: #fff; color: #000; margin: 0; padding: 8mm; box-sizing: border-box; page-break-after: always; display: flex; flex-direction: column; gap: 5mm; font-family: Arial, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact;';
+
+      const gerarBlocoProfissional = (card) => {
+        if (!card) return '';
+        let html = `<div style="border: 2px solid #000; border-radius: 2mm; display: flex; flex-direction: column; height: 135mm; overflow: hidden;">`;
+
+        // --- PARTE A: CARTELA ---
+        html += `<div style="flex: 1; padding: 3mm; display: flex; flex-direction: column;">`;
+        // Header
+        html += `<div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 2mm; margin-bottom: 2mm;">`;
+        html += `<div style="font-size: 14pt; font-weight: 900; color: #1e40af;">${escapeHtml(cardDesign.evento || 'BINGO')}</div>`;
+        html += `<div style="font-size: 12pt; font-weight: 800; color: #000;">CARTELA Nº ${card.number}</div>`;
+        html += `</div>`;
+
+        // Grade B-I-N-G-O
+        html += `<table style="border-collapse: collapse; width: 100%; height: 100%; table-layout: fixed;">`;
+        html += `<tr>`;
+        ['B','I','N','G','O'].forEach(l => {
+          html += `<td style="background: #1e40af; color: #fff; font-size: 22pt; font-weight: 900; text-align: center; border: 2px solid #000; padding: 1mm 0;">${l}</td>`;
+        });
+        html += `</tr>`;
+        for (let r = 0; r < 5; r++) {
+          html += `<tr>`;
+          [card.B[r], card.I[r], card.N[r], card.G[r], card.O[r]].forEach(cell => {
+            const val = cell === 'FREE' ? 'FREE' : String(cell).padStart(2, '0');
+            const fontSize = cell === 'FREE' ? '14pt' : '26pt';
+            html += `<td style="font-size: ${fontSize}; font-weight: 900; text-align: center; border: 2px solid #000; padding: 1mm 0; background: ${cell === 'FREE' ? '#f0f4fa' : '#fff'};">${val}</td>`;
+          });
+          html += `</tr>`;
+        }
+        html += `</table>`;
+
+        // Premiações
+        html += `<div style="margin-top: 2mm; font-size: 9pt; font-weight: 800; text-align: center; border-top: 1px dashed #000; padding-top: 2mm;">`;
+        html += `PREMIAÇÕES: `;
+        const premios = [cardDesign.premio1, cardDesign.premio2, cardDesign.premio3, cardDesign.premio4, cardDesign.premio5, cardDesign.premio6].filter(p => p);
+        if (premios.length > 0) {
+          html += premios.map((p, idx) => `${idx+1}º: ${escapeHtml(p)}`).join(' | ');
+        } else {
+          html += 'A definir';
+        }
+        html += `</div>`;
+        html += `</div>`; // Fim Parte A
+
+        // --- PARTE B: CANHOTO ---
+        html += `<div style="height: 30mm; border-top: 2px dashed #333; padding: 2mm; background: #f9f9f9; display: flex; flex-direction: column; justify-content: space-between;">`;
+        html += `<div style="font-size: 8pt; font-weight: 900; text-align: center; letter-spacing: 1px;">✂ CANHOTO DE CADASTRO — CARTELA Nº ${card.number}</div>`;
+        html += `<div style="display: flex; gap: 2mm; font-size: 9pt; font-weight: 700; align-items: flex-end;">`;
+        html += `<div style="flex: 3; display: flex; gap: 1mm;"><span>NOME:</span><div style="flex: 1; border-bottom: 1px solid #000;"></div></div>`;
+        html += `<div style="flex: 2; display: flex; gap: 1mm;"><span>TEL:</span><div style="flex: 1; border-bottom: 1px solid #000;"></div></div>`;
+        html += `</div>`;
+        html += `<div style="display: flex; gap: 2mm; font-size: 9pt; font-weight: 700; align-items: flex-end;">`;
+        html += `<div style="flex: 2; display: flex; gap: 1mm;"><span>CIDADE:</span><div style="flex: 1; border-bottom: 1px solid #000;"></div></div>`;
+        html += `<div style="flex: 2; display: flex; gap: 1mm;"><span>VENDEDOR:</span><div style="flex: 1; border-bottom: 1px solid #000;"></div></div>`;
+        html += `</div>`;
+        html += `</div>`; // Fim Parte B
+
+        html += `</div>`;
+        return html;
+      };
+
+      page.innerHTML = gerarBlocoProfissional(card1) + gerarBlocoProfissional(card2);
+      area.appendChild(page);
+    }
+    return;
+  }
+
   // ---- NOVO LAYOUT: 3 CARTELAS GRANDES (2 cima, 1 baixo) ----
   if (cardDesign.layout === 'tres_cartelas_arte') {
     for (let i = 0; i < cards.length; i += 3) {
@@ -2366,7 +2468,8 @@ async function verCadastrosNuvem() {
   } catch (err) { showToast('❌', ''); }
 }
 function copiarLinkCadastro() {
-  const l = CADASTRO_DOMAIN;
+  // FORÇA O LINK A SER TODO EM MINÚSCULO PARA CORRIGIR O PROBLEMA DO "B" MAIÚSCULO NO GITHUB PAGES
+  const l = CADASTRO_DOMAIN.toLowerCase();
   navigator.clipboard.writeText(l).then(function() { showToast('🔗 Link copiado!', l); }).catch(function() { prompt('Copie o link:', l); });
 }
 
@@ -2623,7 +2726,7 @@ if (loadState()) console.log('✅ Restaurado: ' + state.cards.length + ' cartela
 ensureBallsGrid(); updateBallsVisual(); renderOperatorInfo(); renderPublicAll(); loadAudioSettings(); updateRoundButtons(); renderCardsListNow(); renderPlayersTable(); aplicarDesignNaUI();
 setTimeout(verificarPendentes, 3000);
 setTimeout(function() { publicarEventoNuvem(true); publicarJogadoresNuvem(true); }, 2000);
-console.log('🎱 BingoMaster v31.0 — Layout 3 Cartelas Grandes Adicionado');
+console.log('🎱 BingoMaster v32.0 — Layout Profissional Acessível e Correção de Link');
 </script>
 </body>
 </html>
