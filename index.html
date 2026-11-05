@@ -500,6 +500,7 @@ input, select, textarea { font-family: inherit; }
             <label class="pattern-toggle"><input type="radio" name="layout-tipo" value="tradicional" onchange="setLayout('tradicional')"> Tradicional (1 cartela)</label>
             <label class="pattern-toggle"><input type="radio" name="layout-tipo" value="eletronico" checked onchange="setLayout('eletronico')"> <b>Eletrônico (2 cartelas + 2 fichas por A4)</b></label>
             <label class="pattern-toggle"><input type="radio" name="layout-tipo" value="matriz_premios" onchange="setLayout('matriz_premios')"> <b>Matriz + 5 Prêmios (Arte Canva)</b></label>
+            <label class="pattern-toggle"><input type="radio" name="layout-tipo" value="tres_cartelas_arte" onchange="setLayout('tres_cartelas_arte')"> <b>3 Cartelas Grandes (Arte Base - 2 cima, 1 baixo)</b></label>
           </div>
         </div>
 
@@ -967,7 +968,7 @@ function aplicarDesignNaUI() {
   // Mostrar ou esconder a seção da URL da arte dependendo do layout
   const arteSection = document.getElementById('arte-fundo-section');
   if (arteSection) {
-    arteSection.style.display = (cardDesign.layout === 'matriz_premios') ? 'block' : 'none';
+    arteSection.style.display = (cardDesign.layout === 'matriz_premios' || cardDesign.layout === 'tres_cartelas_arte') ? 'block' : 'none';
   }
 
   updateDesignPreview(); renderModelos();
@@ -1127,7 +1128,42 @@ async function publicarJogadoresNuvem(silencioso) {
 function renderPreview() {
   const p = document.getElementById('card-preview'); if (!p) return;
 
-  // PREVIEW DO NOVO LAYOUT MATRIZ + PRÊMIOS
+  // PREVIEW DO NOVO LAYOUT: 3 CARTELAS GRANDES
+  if (cardDesign.layout === 'tres_cartelas_arte') {
+    let html = `<div style="position: relative; width: 100%; aspect-ratio: 210 / 297; background: url('${cardDesign.arteFundoUrl || 'https://via.placeholder.com/600x800?text=Fundo+da+Arte+Aqui'}') center/cover no-repeat; border: 2px solid #ccc; border-radius: 4px; overflow: hidden;">`;
+    
+    // Função para gerar mini grade
+    const miniGrade = () => {
+      let g = '<div style="display:grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: #000; padding: 1px; width: 80%; margin: 0 auto;">';
+      for(let i=0; i<25; i++) {
+        g += `<div style="background: #fff; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 6px; font-weight: bold; color: #000;">${i===12 ? 'FREE' : Math.floor(Math.random()*75)+1}</div>`;
+      }
+      g += '</div>';
+      return g;
+    };
+
+    // Posicionamento para o Preview
+    // Cartela 1 (Cima Esquerda)
+    html += `<div style="position: absolute; top: 5%; left: 4%; width: 45%; display:flex; flex-direction:column; align-items:center;">
+      ${miniGrade()}
+    </div>`;
+    
+    // Cartela 2 (Cima Direita)
+    html += `<div style="position: absolute; top: 5%; right: 4%; width: 45%; display:flex; flex-direction:column; align-items:center;">
+      ${miniGrade()}
+    </div>`;
+
+    // Cartela 3 (Baixo Centro)
+    html += `<div style="position: absolute; bottom: 5%; left: 27.5%; width: 45%; display:flex; flex-direction:column; align-items:center;">
+      ${miniGrade()}
+    </div>`;
+
+    html += '</div>';
+    p.innerHTML = html;
+    return;
+  }
+
+  // PREVIEW DO LAYOUT MATRIZ + PRÊMIOS
   if (cardDesign.layout === 'matriz_premios') {
     let html = `<div style="position: relative; width: 100%; aspect-ratio: 210 / 297; background: url('${cardDesign.arteFundoUrl || 'https://via.placeholder.com/600x800?text=Fundo+da+Arte+Aqui'}') center/cover no-repeat; border: 2px solid #ccc; border-radius: 4px; overflow: hidden;">`;
     
@@ -1424,6 +1460,81 @@ function buildPrintArea(cards) {
   const area = document.getElementById('print-area');
   area.innerHTML = '';
   
+  // ---- NOVO LAYOUT: 3 CARTELAS GRANDES (2 cima, 1 baixo) ----
+  if (cardDesign.layout === 'tres_cartelas_arte') {
+    for (let i = 0; i < cards.length; i += 3) {
+      const card1 = cards[i];
+      const card2 = cards[i + 1];
+      const card3 = cards[i + 2];
+
+      const page = document.createElement('div');
+      page.className = 'print-card';
+      page.style.cssText = `width: 210mm; height: 297mm; background-image: url('${cardDesign.arteFundoUrl}'); background-size: cover; background-position: center top; position: relative; page-break-after: always; font-family: Arial, sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact;`;
+
+      // Função para gerar a tabela de números (Grande)
+      const grade = (card) => {
+        if (!card) return '';
+        let h = '<table style="border-collapse:collapse;width:100%;table-layout:fixed;background:rgba(255,255,255,0.95);border-radius: 4mm; overflow: hidden; box-shadow: 0 2mm 4mm rgba(0,0,0,0.2);">';
+        h += '<tr>';
+        ['B','I','N','G','O'].forEach(l => {
+          h += `<td style="color:#fff;background:#1e40af;font-weight:900;text-align:center;font-size:18pt;border:1mm solid #000;padding:1mm 0;">${l}</td>`;
+        });
+        h += '</tr>';
+        for (let r = 0; r < 5; r++) {
+          h += '<tr>';
+          [card.B[r], card.I[r], card.N[r], card.G[r], card.O[r]].forEach(cell => {
+            if (cell === 'FREE') h += `<td style="color:#000;background:#fff;font-size:14pt;text-align:center;border:1mm solid #000;font-weight:900;">FREE</td>`;
+            else h += `<td style="color:#000;background:#fff;font-weight:800;text-align:center;font-size:18pt;border:1mm solid #000;padding: 2mm 0;">${String(cell).padStart(2,'0')}</td>`;
+          });
+          h += '</tr>';
+        }
+        h += '</table>';
+        return h;
+      };
+
+      // Cálculos para A4 (210x297)
+      // Margem de 10mm nas laterais
+      // Largura útil: 190mm. Dividido por 2 (cima) = 95mm cada.
+      // Altura útil: 277mm. Dividido por 2 = 138.5mm cada.
+      
+      let html = '';
+
+      // 1. CARTELA SUPERIOR ESQUERDA
+      if (card1) {
+        html += `
+          <div style="position: absolute; top: 10mm; left: 10mm; width: 90mm;">
+            <div style="text-align:center; margin-bottom: 2mm; font-size:14pt; font-weight:900; color:#000; text-shadow: 0 0 2px #fff;">CARTELA Nº ${card1.number}</div>
+            ${grade(card1)}
+          </div>
+        `;
+      }
+
+      // 2. CARTELA SUPERIOR DIREITA
+      if (card2) {
+        html += `
+          <div style="position: absolute; top: 10mm; right: 10mm; width: 90mm;">
+            <div style="text-align:center; margin-bottom: 2mm; font-size:14pt; font-weight:900; color:#000; text-shadow: 0 0 2px #fff;">CARTELA Nº ${card2.number}</div>
+            ${grade(card2)}
+          </div>
+        `;
+      }
+
+      // 3. CARTELA INFERIOR CENTRALIZADA
+      if (card3) {
+        html += `
+          <div style="position: absolute; bottom: 10mm; left: 55mm; width: 90mm;">
+            <div style="text-align:center; margin-bottom: 2mm; font-size:14pt; font-weight:900; color:#000; text-shadow: 0 0 2px #fff;">CARTELA Nº ${card3.number}</div>
+            ${grade(card3)}
+          </div>
+        `;
+      }
+
+      page.innerHTML = html;
+      area.appendChild(page);
+    }
+    return;
+  }
+
   // ---- NOVO LAYOUT: MATRIZ + 5 PRÊMIOS (ARTE) ----
   if (cardDesign.layout === 'matriz_premios') {
     cards.forEach(card => {
@@ -1635,7 +1746,7 @@ function buildPrintArea(cards) {
 
 function printTestDesign() {
   if (state.cards.length === 0) return showToast('Aviso', 'Gere cartelas primeiro.');
-  buildPrintArea(state.cards.slice(0, 2));
+  buildPrintArea(state.cards.slice(0, 3));
   setTimeout(function() { window.print(); }, 2500);
 }
 
@@ -2512,7 +2623,7 @@ if (loadState()) console.log('✅ Restaurado: ' + state.cards.length + ' cartela
 ensureBallsGrid(); updateBallsVisual(); renderOperatorInfo(); renderPublicAll(); loadAudioSettings(); updateRoundButtons(); renderCardsListNow(); renderPlayersTable(); aplicarDesignNaUI();
 setTimeout(verificarPendentes, 3000);
 setTimeout(function() { publicarEventoNuvem(true); publicarJogadoresNuvem(true); }, 2000);
-console.log('🎱 BingoMaster v30.0 — Layout Matriz + Prêmios Adicionado');
+console.log('🎱 BingoMaster v31.0 — Layout 3 Cartelas Grandes Adicionado');
 </script>
 </body>
 </html>
