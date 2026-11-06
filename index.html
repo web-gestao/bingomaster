@@ -538,7 +538,7 @@ input, select, textarea { font-family: inherit; }
         <div class="design-section">
           <h4>📱 Código</h4>
           <div class="control-row">
-            <label class="pattern-toggle"><input type="radio" name="codigo-tipo" value="qrcode" checked onchange="setTipoCodigo('qrcode')"> QR Code</label>
+            <label class="pattern-toggle"><input type="radio" name="codigo-tipo" value="qrcode" checked onchange="setTipoCodigo('qrcode')"> QR Code (Link da Cartela)</label>
             <label class="pattern-toggle"><input type="radio" name="codigo-tipo" value="barcode" onchange="setTipoCodigo('barcode')"> Código de barras</label>
             <label class="pattern-toggle"><input type="radio" name="codigo-tipo" value="nenhum" onchange="setTipoCodigo('nenhum')"> Sem código</label>
           </div>
@@ -560,12 +560,13 @@ input, select, textarea { font-family: inherit; }
         </div>
 
         <div class="design-section">
-          <h4>📅 Dados do Evento</h4>
+          <h4>📅 Dados do Evento e Regras</h4>
           <div class="form-group"><label>Nome do evento</label><input type="text" id="design-event" placeholder="Ex: BINGO DA PASCOM" oninput="updateDesignPreview()"></div>
           <div class="form-group"><label>Data</label><input type="text" id="design-date" placeholder="Ex: 20/06/2026" oninput="updateDesignPreview()"></div>
           <div class="form-group"><label>Horário</label><input type="text" id="design-horario" placeholder="Ex: 20:30" oninput="updateDesignPreview()"></div>
-          <div class="form-group"><label>Município</label><input type="text" id="design-municipio" placeholder="Ex: URUCURITUBA-AM" oninput="updateDesignPreview()"></div>
+          <div class="form-group"><label>Município/Local</label><input type="text" id="design-municipio" placeholder="Ex: Salão Paroquial" oninput="updateDesignPreview()"></div>
           <div class="form-group"><label>Paróquia/Organização</label><input type="text" id="design-paroquia" placeholder="Ex: CRISTO RESSUSCITADO" oninput="updateDesignPreview()"></div>
+          <div class="form-group"><label>Regras do Bingo (Resumo)</label><textarea id="design-regras" placeholder="Ex: Proibido celular. O prêmio é dividido em caso de empate." style="width:100%; padding:10px; border-radius:8px; background:var(--bg-card); color:var(--text); border:1px solid var(--border);" oninput="updateDesignPreview()"></textarea></div>
           <div class="form-group"><label>Rodapé (operador)</label><input type="text" id="design-operator" placeholder="Ex: Bingo Eletrônico" oninput="updateDesignPreview()"></div>
           <div class="form-group"><label>Telefone (rodapé)</label><input type="text" id="design-phone" placeholder="Ex: (92) 985069592" oninput="updateDesignPreview()"></div>
         </div>
@@ -816,10 +817,9 @@ input, select, textarea { font-family: inherit; }
 const SUPABASE_URL = 'https://oqzauaykcrnzisrbsjsm.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xemF1YXlrY3JuemlzcmJzanNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMTkxMzUsImV4cCI6MjEwNTU5NTEzNX0.KbXCq6Cudl92z7neB34k5-L_nTmT3IXn6dcX1Sp88qE';
 
-// ALTERAÇÃO PARA CORRIGIR O ERRO DO "B" MAIÚSCULO
-// Forçando o link a ser todo em minúsculo
 const NETLIFY_DOMAIN = 'https://web-gestao.github.io/bingomaster';
 const CADASTRO_DOMAIN = 'https://web-gestao.github.io/bingomaster/cadastro.html';
+const PUBLIC_PANEL_DOMAIN = 'https://web-gestao.github.io/bingomaster/index.html?modo=public'; // Link do QRCode
 
 function loadCredentials() {
   try { const s = JSON.parse(localStorage.getItem('bm_credentials') || 'null'); if (s && s.user && s.pass) return s; } catch(e) {}
@@ -926,10 +926,11 @@ const DEFAULT_DESIGN = {
   valorCartela: '',
   premio1: '', premio2: '', premio3: '',
   premio4: '', premio5: '', premio6: '',
+  regras: '', // Nova propriedade
   operator: 'Bingo Eletrônico',
   phone: '',
   tipoCodigo: 'qrcode',
-  arteFundoUrl: '', // Nova propriedade para a imagem do Canva
+  arteFundoUrl: '', 
   colors: { bg: '#ffffff', head: '#1e40af', headText: '#ffffff', num: '#000000', border: '#000000' }
 };
 let cardDesign = JSON.parse(JSON.stringify(DEFAULT_DESIGN));
@@ -960,6 +961,7 @@ function aplicarDesignNaUI() {
   setVal('design-valor-cartela', cardDesign.valorCartela);
   setVal('design-operator', cardDesign.operator);
   setVal('design-phone', cardDesign.phone);
+  setVal('design-regras', cardDesign.regras);
   setVal('premio1', cardDesign.premio1);
   setVal('premio2', cardDesign.premio2);
   setVal('premio3', cardDesign.premio3);
@@ -968,7 +970,6 @@ function aplicarDesignNaUI() {
   setVal('premio6', cardDesign.premio6);
   setVal('design-arte-url', cardDesign.arteFundoUrl);
   
-  // Mostrar ou esconder a seção da URL da arte dependendo do layout
   const arteSection = document.getElementById('arte-fundo-section');
   if (arteSection) {
     arteSection.style.display = (cardDesign.layout === 'matriz_premios' || cardDesign.layout === 'tres_cartelas_arte') ? 'block' : 'none';
@@ -979,7 +980,7 @@ function aplicarDesignNaUI() {
 function setLayout(tipo) { 
   cardDesign.layout = tipo; 
   saveDesign(); 
-  aplicarDesignNaUI(); // Atualiza a visibilidade do campo de URL
+  aplicarDesignNaUI(); 
   updateDesignPreview(); 
 }
 function setStyle(estilo, btn) {
@@ -993,8 +994,8 @@ function setStyle(estilo, btn) {
 }
 function setTipoCodigo(t) { cardDesign.tipoCodigo = t; saveDesign(); updateDesignPreview(); }
 function updateDesignPreview() {
-  const ids = ['design-event','design-date','design-horario','design-municipio','design-paroquia','design-valor-cartela','design-operator','design-phone','premio1','premio2','premio3','premio4','premio5','premio6','design-arte-url'];
-  const keys = ['evento','data','horario','municipio','paroquia','valorCartela','operator','phone','premio1','premio2','premio3','premio4','premio5','premio6','arteFundoUrl'];
+  const ids = ['design-event','design-date','design-horario','design-municipio','design-paroquia','design-valor-cartela','design-operator','design-phone','premio1','premio2','premio3','premio4','premio5','premio6','design-arte-url','design-regras'];
+  const keys = ['evento','data','horario','municipio','paroquia','valorCartela','operator','phone','premio1','premio2','premio3','premio4','premio5','premio6','arteFundoUrl','regras'];
   ids.forEach(function(id, i) { cardDesign[keys[i]] = (document.getElementById(id) || {}).value || ''; });
   renderPreview();
 }
@@ -1136,15 +1137,20 @@ function renderPreview() {
     let html = `<div style="position: relative; width: 100%; aspect-ratio: 210 / 297; background: #fff; border: 2px solid #ccc; border-radius: 4px; overflow: hidden; padding: 5mm; display: flex; flex-direction: column; gap: 5mm;">`;
     
     const miniBloco = (num) => `
-      <div style="border: 1px solid #000; flex: 1; display: flex; flex-direction: column; padding: 2mm;">
-        <div style="text-align: center; border-bottom: 1px solid #000; margin-bottom: 2mm; padding-bottom: 2mm;">
-          <div style="font-size: 8px; font-weight: bold; color: #1e40af;">BINGO</div>
-          <div style="font-size: 7px; font-weight: bold;">CARTELA Nº ${num}</div>
+      <div style="border: 1px solid #000; flex: 1; display: flex; flex-direction: column; padding: 2mm; overflow: hidden;">
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #000; margin-bottom: 2mm; padding-bottom: 2mm;">
+          <div>
+            <div style="font-size: 8px; font-weight: bold; color: #1e40af;">${escapeHtml(cardDesign.evento || 'BINGO')}</div>
+            <div style="font-size: 7px; font-weight: bold;">CARTELA Nº ${num}</div>
+            <div style="font-size: 6px;">Data: ${escapeHtml(cardDesign.data)} | Hora: ${escapeHtml(cardDesign.horario)} | Local: ${escapeHtml(cardDesign.municipio)}</div>
+          </div>
+          <div style="width: 40px; height: 40px; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 6px; color: #999;">QR CODE</div>
         </div>
         <div style="flex: 1; background: #f0f0f0; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #666;">GRADE NUMÉRICA</div>
-        <div style="text-align: center; font-size: 5px; margin-top: 2mm; border-top: 1px dashed #000; padding-top: 2mm;">PREMIAÇÕES</div>
+        <div style="font-size: 5px; margin-top: 1mm; border-top: 1px dashed #000; padding-top: 1mm; overflow: hidden; max-height: 15px;"><b>PREMIAÇÕES:</b> ${escapeHtml(cardDesign.premio1)} | ${escapeHtml(cardDesign.premio2)} | ...</div>
+        <div style="font-size: 5px; overflow: hidden; max-height: 10px;"><b>REGRAS:</b> ${escapeHtml(cardDesign.regras)}</div>
       </div>
-      <div style="height: 15mm; border: 1px dashed #333; background: #f9f9f9; padding: 1mm; display: flex; align-items: center; justify-content: center; font-size: 5px;">
+      <div style="height: 15mm; flex-shrink: 0; border: 1px dashed #333; background: #f9f9f9; padding: 1mm; display: flex; align-items: center; justify-content: center; font-size: 5px;">
         CANHOTO DE CADASTRO
       </div>
     `;
@@ -1159,7 +1165,6 @@ function renderPreview() {
   if (cardDesign.layout === 'tres_cartelas_arte') {
     let html = `<div style="position: relative; width: 100%; aspect-ratio: 210 / 297; background: url('${cardDesign.arteFundoUrl || 'https://via.placeholder.com/600x800?text=Fundo+da+Arte+Aqui'}') center/cover no-repeat; border: 2px solid #ccc; border-radius: 4px; overflow: hidden;">`;
     
-    // Função para gerar mini grade
     const miniGrade = () => {
       let g = '<div style="display:grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: #000; padding: 1px; width: 80%; margin: 0 auto;">';
       for(let i=0; i<25; i++) {
@@ -1169,21 +1174,9 @@ function renderPreview() {
       return g;
     };
 
-    // Posicionamento para o Preview
-    // Cartela 1 (Cima Esquerda)
-    html += `<div style="position: absolute; top: 5%; left: 4%; width: 45%; display:flex; flex-direction:column; align-items:center;">
-      ${miniGrade()}
-    </div>`;
-    
-    // Cartela 2 (Cima Direita)
-    html += `<div style="position: absolute; top: 5%; right: 4%; width: 45%; display:flex; flex-direction:column; align-items:center;">
-      ${miniGrade()}
-    </div>`;
-
-    // Cartela 3 (Baixo Centro)
-    html += `<div style="position: absolute; bottom: 5%; left: 27.5%; width: 45%; display:flex; flex-direction:column; align-items:center;">
-      ${miniGrade()}
-    </div>`;
+    html += `<div style="position: absolute; top: 5%; left: 4%; width: 45%; display:flex; flex-direction:column; align-items:center;">${miniGrade()}</div>`;
+    html += `<div style="position: absolute; top: 5%; right: 4%; width: 45%; display:flex; flex-direction:column; align-items:center;">${miniGrade()}</div>`;
+    html += `<div style="position: absolute; bottom: 5%; left: 27.5%; width: 45%; display:flex; flex-direction:column; align-items:center;">${miniGrade()}</div>`;
 
     html += '</div>';
     p.innerHTML = html;
@@ -1194,7 +1187,6 @@ function renderPreview() {
   if (cardDesign.layout === 'matriz_premios') {
     let html = `<div style="position: relative; width: 100%; aspect-ratio: 210 / 297; background: url('${cardDesign.arteFundoUrl || 'https://via.placeholder.com/600x800?text=Fundo+da+Arte+Aqui'}') center/cover no-repeat; border: 2px solid #ccc; border-radius: 4px; overflow: hidden;">`;
     
-    // Função para gerar mini grade
     const miniGrade = () => {
       let g = '<div style="display:grid; grid-template-columns: repeat(5, 1fr); gap: 1px; background: #000; padding: 1px;">';
       for(let i=0; i<25; i++) {
@@ -1204,7 +1196,6 @@ function renderPreview() {
       return g;
     };
 
-    // Texto auxiliar de prêmio
     const txtPremio = (num, titulo, valor) => `
       <div style="text-align: center; margin-bottom: 2px;">
         <div style="font-size: 6px; font-weight: 900; color: #1e40af;">${num}º PRÊMIO</div>
@@ -1213,36 +1204,12 @@ function renderPreview() {
       </div>
     `;
 
-    // Posicionamento (estimado em porcentagem para o preview)
-    html += `<div style="position: absolute; top: 25%; left: 4%; width: 28%;">
-      <div style="text-align:center; margin-bottom: 2px; font-size: 6px; font-weight:900; color:#1e40af;">MATRIZ</div>
-      ${miniGrade()}
-    </div>`;
-    
-    html += `<div style="position: absolute; top: 25%; left: 36%; width: 28%;">
-      ${txtPremio(1, 'CARTELA CHEIA', cardDesign.premio1)}
-      ${miniGrade()}
-    </div>`;
-
-    html += `<div style="position: absolute; top: 25%; left: 68%; width: 28%;">
-      ${txtPremio(2, 'QUINA', cardDesign.premio2)}
-      ${miniGrade()}
-    </div>`;
-
-    html += `<div style="position: absolute; top: 62%; left: 4%; width: 28%;">
-      ${txtPremio(3, 'QUINA', cardDesign.premio3)}
-      ${miniGrade()}
-    </div>`;
-
-    html += `<div style="position: absolute; top: 62%; left: 36%; width: 28%;">
-      ${txtPremio(4, 'QUINA', cardDesign.premio4)}
-      ${miniGrade()}
-    </div>`;
-
-    html += `<div style="position: absolute; top: 62%; left: 68%; width: 28%;">
-      ${txtPremio(5, 'QUINA', cardDesign.premio5)}
-      ${miniGrade()}
-    </div>`;
+    html += `<div style="position: absolute; top: 25%; left: 4%; width: 28%;"><div style="text-align:center; margin-bottom: 2px; font-size: 6px; font-weight:900; color:#1e40af;">MATRIZ</div>${miniGrade()}</div>`;
+    html += `<div style="position: absolute; top: 25%; left: 36%; width: 28%;">${txtPremio(1, 'CARTELA CHEIA', cardDesign.premio1)}${miniGrade()}</div>`;
+    html += `<div style="position: absolute; top: 25%; left: 68%; width: 28%;">${txtPremio(2, 'QUINA', cardDesign.premio2)}${miniGrade()}</div>`;
+    html += `<div style="position: absolute; top: 62%; left: 4%; width: 28%;">${txtPremio(3, 'QUINA', cardDesign.premio3)}${miniGrade()}</div>`;
+    html += `<div style="position: absolute; top: 62%; left: 36%; width: 28%;">${txtPremio(4, 'QUINA', cardDesign.premio4)}${miniGrade()}</div>`;
+    html += `<div style="position: absolute; top: 62%; left: 68%; width: 28%;">${txtPremio(5, 'QUINA', cardDesign.premio5)}${miniGrade()}</div>`;
 
     html += '</div>';
     p.innerHTML = html;
@@ -1495,41 +1462,49 @@ function buildPrintArea(cards) {
 
       const page = document.createElement('div');
       page.className = 'print-card';
-      page.style.cssText = 'width: 210mm; height: 297mm; background: #fff; color: #000; margin: 0; padding: 8mm; box-sizing: border-box; page-break-after: always; display: flex; flex-direction: column; gap: 5mm; font-family: Arial, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact;';
+      page.style.cssText = 'width: 210mm; height: 297mm; background: #fff; color: #000; margin: 0; padding: 8mm; box-sizing: border-box; page-break-after: always; display: flex; flex-direction: column; gap: 6mm; font-family: Arial, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact;';
 
       const gerarBlocoProfissional = (card) => {
         if (!card) return '';
+        
+        // O bloco tem uma altura fixa (135mm) para garantir que 2 caibam na folha A4 com folga
         let html = `<div style="border: 2px solid #000; border-radius: 2mm; display: flex; flex-direction: column; height: 135mm; overflow: hidden;">`;
 
-        // --- PARTE A: CARTELA ---
-        html += `<div style="flex: 1; padding: 3mm; display: flex; flex-direction: column;">`;
-        // Header
-        html += `<div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 2mm; margin-bottom: 2mm;">`;
-        html += `<div style="font-size: 14pt; font-weight: 900; color: #1e40af;">${escapeHtml(cardDesign.evento || 'BINGO')}</div>`;
-        html += `<div style="font-size: 12pt; font-weight: 800; color: #000;">CARTELA Nº ${card.number}</div>`;
+        // --- PARTE A: CABEÇALHO E GRADE ---
+        html += `<div style="flex: 1; padding: 2mm 3mm 1mm 3mm; display: flex; flex-direction: column; overflow: hidden;">`;
+        
+        // Header com QR Code
+        html += `<div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000; padding-bottom: 1.5mm; margin-bottom: 1.5mm;">`;
+        html += `<div style="text-align: left; flex: 1;">`;
+        html += `<div style="font-size: 12pt; font-weight: 900; color: #1e40af; text-transform: uppercase;">${escapeHtml(cardDesign.evento || 'BINGO')}</div>`;
+        html += `<div style="font-size: 10pt; font-weight: 800; color: #000;">CARTELA Nº ${card.number}</div>`;
+        html += `<div style="font-size: 7pt; font-weight: bold; color: #333; margin-top: 0.5mm;">Data: ${escapeHtml(cardDesign.data || '--/--/----')} | Hora: ${escapeHtml(cardDesign.horario || '--:--')} | Local: ${escapeHtml(cardDesign.municipio || 'A definir')}</div>`;
+        html += `</div>`;
+        // QR Code para o Painel Público
+        html += `<div style="width: 18mm; height: 18mm; margin-left: 2mm;"><img src="${urlQRCode(PUBLIC_PANEL_DOMAIN, 200)}" style="width: 100%; height: 100%;" alt="QR Code Painel"></div>`;
         html += `</div>`;
 
-        // Grade B-I-N-G-O
+        // Grade de Números (reduzida)
         html += `<table style="border-collapse: collapse; width: 100%; height: 100%; table-layout: fixed;">`;
         html += `<tr>`;
         ['B','I','N','G','O'].forEach(l => {
-          html += `<td style="background: #1e40af; color: #fff; font-size: 22pt; font-weight: 900; text-align: center; border: 2px solid #000; padding: 1mm 0;">${l}</td>`;
+          html += `<td style="background: #1e40af; color: #fff; font-size: 16pt; font-weight: 900; text-align: center; border: 1.5px solid #000; padding: 0.5mm 0;">${l}</td>`;
         });
         html += `</tr>`;
         for (let r = 0; r < 5; r++) {
           html += `<tr>`;
           [card.B[r], card.I[r], card.N[r], card.G[r], card.O[r]].forEach(cell => {
             const val = cell === 'FREE' ? 'FREE' : String(cell).padStart(2, '0');
-            const fontSize = cell === 'FREE' ? '14pt' : '26pt';
-            html += `<td style="font-size: ${fontSize}; font-weight: 900; text-align: center; border: 2px solid #000; padding: 1mm 0; background: ${cell === 'FREE' ? '#f0f4fa' : '#fff'};">${val}</td>`;
+            const fontSize = cell === 'FREE' ? '10pt' : '18pt'; // Fonte reduzida de 26 para 18
+            html += `<td style="font-size: ${fontSize}; font-weight: 900; text-align: center; border: 1.5px solid #000; padding: 0.5mm 0; background: ${cell === 'FREE' ? '#f0f4fa' : '#fff'};">${val}</td>`;
           });
           html += `</tr>`;
         }
         html += `</table>`;
 
-        // Premiações
-        html += `<div style="margin-top: 2mm; font-size: 9pt; font-weight: 800; text-align: center; border-top: 1px dashed #000; padding-top: 2mm;">`;
-        html += `PREMIAÇÕES: `;
+        // Prêmios e Regras (Protegidos contra overflow)
+        html += `<div style="margin-top: 1.5mm; flex-shrink: 0; display: flex; flex-direction: column; gap: 0.5mm;">`;
+        html += `<div style="font-size: 6pt; font-weight: 800; line-height: 1.2; max-height: 10mm; overflow: hidden;"><b>PREMIAÇÕES:</b> `;
         const premios = [cardDesign.premio1, cardDesign.premio2, cardDesign.premio3, cardDesign.premio4, cardDesign.premio5, cardDesign.premio6].filter(p => p);
         if (premios.length > 0) {
           html += premios.map((p, idx) => `${idx+1}º: ${escapeHtml(p)}`).join(' | ');
@@ -1537,16 +1512,22 @@ function buildPrintArea(cards) {
           html += 'A definir';
         }
         html += `</div>`;
+        
+        if (cardDesign.regras) {
+          html += `<div style="font-size: 5.5pt; font-weight: 600; line-height: 1.1; max-height: 8mm; overflow: hidden; color: #444;"><b>REGULAMENTO:</b> ${escapeHtml(cardDesign.regras)}</div>`;
+        }
+        html += `</div>`;
+        
         html += `</div>`; // Fim Parte A
 
-        // --- PARTE B: CANHOTO ---
-        html += `<div style="height: 30mm; border-top: 2px dashed #333; padding: 2mm; background: #f9f9f9; display: flex; flex-direction: column; justify-content: space-between;">`;
-        html += `<div style="font-size: 8pt; font-weight: 900; text-align: center; letter-spacing: 1px;">✂ CANHOTO DE CADASTRO — CARTELA Nº ${card.number}</div>`;
-        html += `<div style="display: flex; gap: 2mm; font-size: 9pt; font-weight: 700; align-items: flex-end;">`;
+        // --- PARTE B: CANHOTO (Protegido, não encolhe) ---
+        html += `<div style="height: 25mm; flex-shrink: 0; border-top: 2px dashed #333; padding: 1.5mm 3mm; background: #f9f9f9; display: flex; flex-direction: column; justify-content: space-between;">`;
+        html += `<div style="font-size: 7pt; font-weight: 900; text-align: center; letter-spacing: 0.5px; margin-bottom: 1mm;">✂ CANHOTO DE CADASTRO — CARTELA Nº ${card.number}</div>`;
+        html += `<div style="display: flex; gap: 2mm; font-size: 8pt; font-weight: 700; align-items: flex-end;">`;
         html += `<div style="flex: 3; display: flex; gap: 1mm;"><span>NOME:</span><div style="flex: 1; border-bottom: 1px solid #000;"></div></div>`;
         html += `<div style="flex: 2; display: flex; gap: 1mm;"><span>TEL:</span><div style="flex: 1; border-bottom: 1px solid #000;"></div></div>`;
         html += `</div>`;
-        html += `<div style="display: flex; gap: 2mm; font-size: 9pt; font-weight: 700; align-items: flex-end;">`;
+        html += `<div style="display: flex; gap: 2mm; font-size: 8pt; font-weight: 700; align-items: flex-end;">`;
         html += `<div style="flex: 2; display: flex; gap: 1mm;"><span>CIDADE:</span><div style="flex: 1; border-bottom: 1px solid #000;"></div></div>`;
         html += `<div style="flex: 2; display: flex; gap: 1mm;"><span>VENDEDOR:</span><div style="flex: 1; border-bottom: 1px solid #000;"></div></div>`;
         html += `</div>`;
@@ -1573,7 +1554,6 @@ function buildPrintArea(cards) {
       page.className = 'print-card';
       page.style.cssText = `width: 210mm; height: 297mm; background-image: url('${cardDesign.arteFundoUrl}'); background-size: cover; background-position: center top; position: relative; page-break-after: always; font-family: Arial, sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact;`;
 
-      // Função para gerar a tabela de números (Grande)
       const grade = (card) => {
         if (!card) return '';
         let h = '<table style="border-collapse:collapse;width:100%;table-layout:fixed;background:rgba(255,255,255,0.95);border-radius: 4mm; overflow: hidden; box-shadow: 0 2mm 4mm rgba(0,0,0,0.2);">';
@@ -1594,41 +1574,16 @@ function buildPrintArea(cards) {
         return h;
       };
 
-      // Cálculos para A4 (210x297)
-      // Margem de 10mm nas laterais
-      // Largura útil: 190mm. Dividido por 2 (cima) = 95mm cada.
-      // Altura útil: 277mm. Dividido por 2 = 138.5mm cada.
-      
       let html = '';
 
-      // 1. CARTELA SUPERIOR ESQUERDA
       if (card1) {
-        html += `
-          <div style="position: absolute; top: 10mm; left: 10mm; width: 90mm;">
-            <div style="text-align:center; margin-bottom: 2mm; font-size:14pt; font-weight:900; color:#000; text-shadow: 0 0 2px #fff;">CARTELA Nº ${card1.number}</div>
-            ${grade(card1)}
-          </div>
-        `;
+        html += `<div style="position: absolute; top: 10mm; left: 10mm; width: 90mm;"><div style="text-align:center; margin-bottom: 2mm; font-size:14pt; font-weight:900; color:#000; text-shadow: 0 0 2px #fff;">CARTELA Nº ${card1.number}</div>${grade(card1)}</div>`;
       }
-
-      // 2. CARTELA SUPERIOR DIREITA
       if (card2) {
-        html += `
-          <div style="position: absolute; top: 10mm; right: 10mm; width: 90mm;">
-            <div style="text-align:center; margin-bottom: 2mm; font-size:14pt; font-weight:900; color:#000; text-shadow: 0 0 2px #fff;">CARTELA Nº ${card2.number}</div>
-            ${grade(card2)}
-          </div>
-        `;
+        html += `<div style="position: absolute; top: 10mm; right: 10mm; width: 90mm;"><div style="text-align:center; margin-bottom: 2mm; font-size:14pt; font-weight:900; color:#000; text-shadow: 0 0 2px #fff;">CARTELA Nº ${card2.number}</div>${grade(card2)}</div>`;
       }
-
-      // 3. CARTELA INFERIOR CENTRALIZADA
       if (card3) {
-        html += `
-          <div style="position: absolute; bottom: 10mm; left: 55mm; width: 90mm;">
-            <div style="text-align:center; margin-bottom: 2mm; font-size:14pt; font-weight:900; color:#000; text-shadow: 0 0 2px #fff;">CARTELA Nº ${card3.number}</div>
-            ${grade(card3)}
-          </div>
-        `;
+        html += `<div style="position: absolute; bottom: 10mm; left: 55mm; width: 90mm;"><div style="text-align:center; margin-bottom: 2mm; font-size:14pt; font-weight:900; color:#000; text-shadow: 0 0 2px #fff;">CARTELA Nº ${card3.number}</div>${grade(card3)}</div>`;
       }
 
       page.innerHTML = html;
@@ -1642,10 +1597,8 @@ function buildPrintArea(cards) {
     cards.forEach(card => {
       const page = document.createElement('div');
       page.className = 'print-card';
-      // O fundo é a arte do Canva
       page.style.cssText = `width: 210mm; height: 297mm; background-image: url('${cardDesign.arteFundoUrl}'); background-size: cover; background-position: center top; position: relative; page-break-after: always; font-family: Arial, sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact;`;
 
-      // Função para gerar a tabela de números transparente com medidas exatas
       const grade = (isMatriz) => {
         let h = '<table style="border-collapse:collapse;width:100%;table-layout:fixed;background:rgba(255,255,255,0.95);border-radius: 2mm; overflow: hidden; box-shadow: 0 1mm 2mm rgba(0,0,0,0.1);">';
         h += '<tr>';
@@ -1665,7 +1618,6 @@ function buildPrintArea(cards) {
         return h;
       };
 
-      // Função para gerar texto do prêmio
       const txtPremio = (num, titulo, valor) => `
         <div style="text-align:center; margin-bottom: 1mm;">
           <div style="font-size: 11pt; font-weight: 900; color: #1e40af; text-shadow: 0 0 2px #fff, 0 0 2px #fff;">${num}º PRÊMIO</div>
@@ -1674,60 +1626,14 @@ function buildPrintArea(cards) {
         </div>
       `;
 
-      // MEDIDAS EXATAS EM MILÍMETROS PARA UMA FOLHA A4 (210mm x 297mm)
       let html = '';
 
-      // 1. MATRIZ (Canto Superior Esquerdo)
-      html += `
-        <div style="position: absolute; top: 42mm; left: 10mm; width: 58mm;">
-          <div style="text-align:center; margin-bottom: 1mm;">
-            <div style="font-size: 10pt; font-weight: 900; color: #1e40af; text-shadow: 0 0 2px #fff;">VALOR: ${cardDesign.valorCartela || 'R$ ---'}</div>
-          </div>
-          ${grade(true)}
-        </div>
-      `;
-
-      // 2. 1º PRÊMIO (Canto Superior Central)
-      html += `
-        <div style="position: absolute; top: 42mm; left: 76mm; width: 58mm;">
-          ${txtPremio(1, 'CARTELA CHEIA', cardDesign.premio1)}
-          ${grade(false)}
-        </div>
-      `;
-
-      // 3. 2º PRÊMIO (Canto Superior Direito)
-      html += `
-        <div style="position: absolute; top: 42mm; left: 142mm; width: 58mm;">
-          ${txtPremio(2, 'QUINA', cardDesign.premio2)}
-          ${grade(false)}
-        </div>
-      `;
-
-      // 4. 3º PRÊMIO (Canto Inferior Esquerdo)
-      html += `
-        <div style="position: absolute; top: 162mm; left: 10mm; width: 58mm;">
-          ${txtPremio(3, 'QUINA', cardDesign.premio3)}
-          ${grade(false)}
-        </div>
-      `;
-
-      // 5. 4º PRÊMIO (Canto Inferior Central)
-      html += `
-        <div style="position: absolute; top: 162mm; left: 76mm; width: 58mm;">
-          ${txtPremio(4, 'QUINA', cardDesign.premio4)}
-          ${grade(false)}
-        </div>
-      `;
-
-      // 6. 5º PRÊMIO (Canto Inferior Direito)
-      html += `
-        <div style="position: absolute; top: 162mm; left: 142mm; width: 58mm;">
-          ${txtPremio(5, 'QUINA', cardDesign.premio5)}
-          ${grade(false)}
-        </div>
-      `;
-
-      // Número da Cartela no rodapé esquerdo para controle
+      html += `<div style="position: absolute; top: 42mm; left: 10mm; width: 58mm;"><div style="text-align:center; margin-bottom: 1mm;"><div style="font-size: 10pt; font-weight: 900; color: #1e40af; text-shadow: 0 0 2px #fff;">VALOR: ${cardDesign.valorCartela || 'R$ ---'}</div></div>${grade(true)}</div>`;
+      html += `<div style="position: absolute; top: 42mm; left: 76mm; width: 58mm;">${txtPremio(1, 'CARTELA CHEIA', cardDesign.premio1)}${grade(false)}</div>`;
+      html += `<div style="position: absolute; top: 42mm; left: 142mm; width: 58mm;">${txtPremio(2, 'QUINA', cardDesign.premio2)}${grade(false)}</div>`;
+      html += `<div style="position: absolute; top: 162mm; left: 10mm; width: 58mm;">${txtPremio(3, 'QUINA', cardDesign.premio3)}${grade(false)}</div>`;
+      html += `<div style="position: absolute; top: 162mm; left: 76mm; width: 58mm;">${txtPremio(4, 'QUINA', cardDesign.premio4)}${grade(false)}</div>`;
+      html += `<div style="position: absolute; top: 162mm; left: 142mm; width: 58mm;">${txtPremio(5, 'QUINA', cardDesign.premio5)}${grade(false)}</div>`;
       html += `<div style="position: absolute; bottom: 5mm; left: 10mm; font-size: 10pt; font-weight: bold; color: #000; background: rgba(255,255,255,0.9); padding: 1mm 2mm; border-radius: 1mm; border: 0.5mm solid #000;">Nº ${card.number}</div>`;
 
       page.innerHTML = html;
@@ -2468,7 +2374,6 @@ async function verCadastrosNuvem() {
   } catch (err) { showToast('❌', ''); }
 }
 function copiarLinkCadastro() {
-  // FORÇA O LINK A SER TODO EM MINÚSCULO PARA CORRIGIR O PROBLEMA DO "B" MAIÚSCULO NO GITHUB PAGES
   const l = CADASTRO_DOMAIN.toLowerCase();
   navigator.clipboard.writeText(l).then(function() { showToast('🔗 Link copiado!', l); }).catch(function() { prompt('Copie o link:', l); });
 }
@@ -2726,7 +2631,7 @@ if (loadState()) console.log('✅ Restaurado: ' + state.cards.length + ' cartela
 ensureBallsGrid(); updateBallsVisual(); renderOperatorInfo(); renderPublicAll(); loadAudioSettings(); updateRoundButtons(); renderCardsListNow(); renderPlayersTable(); aplicarDesignNaUI();
 setTimeout(verificarPendentes, 3000);
 setTimeout(function() { publicarEventoNuvem(true); publicarJogadoresNuvem(true); }, 2000);
-console.log('🎱 BingoMaster v32.0 — Layout Profissional Acessível e Correção de Link');
+console.log('🎱 BingoMaster v33.0 — Layout Profissional Ajustado com Regras, Evento e QR Code');
 </script>
 </body>
 </html>
