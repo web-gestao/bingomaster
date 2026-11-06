@@ -806,6 +806,7 @@ input, select, textarea { font-family: inherit; }
     const telaPequena = window.innerWidth <= 768 && 'ontouchstart' in window;
     const param = new URLSearchParams(window.location.search).get('modo');
     if (param === 'pc' || param === 'operador') return false;
+    if (param === 'public') return false; // <-- CORREÇÃO AQUI: Não redireciona se for painel publico
     if (param === 'mobile' || param === 'cadastro') return true;
     return mobile || telaPequena;
   }
@@ -1147,8 +1148,8 @@ function renderPreview() {
           <div style="width: 40px; height: 40px; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 6px; color: #999;">QR CODE</div>
         </div>
         <div style="flex: 1; background: #f0f0f0; border: 1px solid #ccc; display: flex; align-items: center; justify-content: center; font-size: 8px; color: #666;">GRADE NUMÉRICA</div>
-        <div style="font-size: 5px; margin-top: 1mm; border-top: 1px dashed #000; padding-top: 1mm; overflow: hidden; max-height: 15px;"><b>PREMIAÇÕES:</b> ${escapeHtml(cardDesign.premio1)} | ${escapeHtml(cardDesign.premio2)} | ...</div>
-        <div style="font-size: 5px; overflow: hidden; max-height: 10px;"><b>REGRAS:</b> ${escapeHtml(cardDesign.regras)}</div>
+        <div style="font-size: 6px; margin-top: 1mm; border-top: 1px dashed #000; padding-top: 1mm; overflow: hidden; max-height: 15px;"><b>PREMIAÇÕES:</b> ${escapeHtml(cardDesign.premio1)} | ${escapeHtml(cardDesign.premio2)} | ...</div>
+        <div style="font-size: 6px; overflow: hidden; max-height: 10px;"><b>REGRAS:</b> ${escapeHtml(cardDesign.regras)}</div>
       </div>
       <div style="height: 15mm; flex-shrink: 0; border: 1px dashed #333; background: #f9f9f9; padding: 1mm; display: flex; align-items: center; justify-content: center; font-size: 5px;">
         CANHOTO DE CADASTRO
@@ -1467,10 +1468,8 @@ function buildPrintArea(cards) {
       const gerarBlocoProfissional = (card) => {
         if (!card) return '';
         
-        // O bloco tem uma altura fixa (135mm) para garantir que 2 caibam na folha A4 com folga
         let html = `<div style="border: 2px solid #000; border-radius: 2mm; display: flex; flex-direction: column; height: 135mm; overflow: hidden;">`;
 
-        // --- PARTE A: CABEÇALHO E GRADE ---
         html += `<div style="flex: 1; padding: 2mm 3mm 1mm 3mm; display: flex; flex-direction: column; overflow: hidden;">`;
         
         // Header com QR Code
@@ -1484,8 +1483,8 @@ function buildPrintArea(cards) {
         html += `<div style="width: 18mm; height: 18mm; margin-left: 2mm;"><img src="${urlQRCode(PUBLIC_PANEL_DOMAIN, 200)}" style="width: 100%; height: 100%;" alt="QR Code Painel"></div>`;
         html += `</div>`;
 
-        // Grade de Números (reduzida)
-        html += `<table style="border-collapse: collapse; width: 100%; height: 100%; table-layout: fixed;">`;
+        // Grade de Números
+        html += `<table style="border-collapse: collapse; width: 100%; flex: 1; table-layout: fixed;">`;
         html += `<tr>`;
         ['B','I','N','G','O'].forEach(l => {
           html += `<td style="background: #1e40af; color: #fff; font-size: 16pt; font-weight: 900; text-align: center; border: 1.5px solid #000; padding: 0.5mm 0;">${l}</td>`;
@@ -1495,16 +1494,16 @@ function buildPrintArea(cards) {
           html += `<tr>`;
           [card.B[r], card.I[r], card.N[r], card.G[r], card.O[r]].forEach(cell => {
             const val = cell === 'FREE' ? 'FREE' : String(cell).padStart(2, '0');
-            const fontSize = cell === 'FREE' ? '10pt' : '18pt'; // Fonte reduzida de 26 para 18
+            const fontSize = cell === 'FREE' ? '10pt' : '18pt';
             html += `<td style="font-size: ${fontSize}; font-weight: 900; text-align: center; border: 1.5px solid #000; padding: 0.5mm 0; background: ${cell === 'FREE' ? '#f0f4fa' : '#fff'};">${val}</td>`;
           });
           html += `</tr>`;
         }
         html += `</table>`;
 
-        // Prêmios e Regras (Protegidos contra overflow)
-        html += `<div style="margin-top: 1.5mm; flex-shrink: 0; display: flex; flex-direction: column; gap: 0.5mm;">`;
-        html += `<div style="font-size: 6pt; font-weight: 800; line-height: 1.2; max-height: 10mm; overflow: hidden;"><b>PREMIAÇÕES:</b> `;
+        // Prêmios e Regras com fontes maiores
+        html += `<div style="margin-top: 1.5mm; flex-shrink: 0; display: flex; flex-direction: column; gap: 1mm;">`;
+        html += `<div style="font-size: 7pt; font-weight: 800; line-height: 1.2; max-height: 12mm; overflow: hidden;"><b>PREMIAÇÕES:</b> `;
         const premios = [cardDesign.premio1, cardDesign.premio2, cardDesign.premio3, cardDesign.premio4, cardDesign.premio5, cardDesign.premio6].filter(p => p);
         if (premios.length > 0) {
           html += premios.map((p, idx) => `${idx+1}º: ${escapeHtml(p)}`).join(' | ');
@@ -1514,7 +1513,8 @@ function buildPrintArea(cards) {
         html += `</div>`;
         
         if (cardDesign.regras) {
-          html += `<div style="font-size: 5.5pt; font-weight: 600; line-height: 1.1; max-height: 8mm; overflow: hidden; color: #444;"><b>REGULAMENTO:</b> ${escapeHtml(cardDesign.regras)}</div>`;
+          // Fonte do regulamento aumentada para 8pt
+          html += `<div style="font-size: 8pt; font-weight: 600; line-height: 1.2; max-height: 15mm; overflow: hidden; color: #333;"><b>REGULAMENTO:</b> ${escapeHtml(cardDesign.regras)}</div>`;
         }
         html += `</div>`;
         
@@ -2631,7 +2631,7 @@ if (loadState()) console.log('✅ Restaurado: ' + state.cards.length + ' cartela
 ensureBallsGrid(); updateBallsVisual(); renderOperatorInfo(); renderPublicAll(); loadAudioSettings(); updateRoundButtons(); renderCardsListNow(); renderPlayersTable(); aplicarDesignNaUI();
 setTimeout(verificarPendentes, 3000);
 setTimeout(function() { publicarEventoNuvem(true); publicarJogadoresNuvem(true); }, 2000);
-console.log('🎱 BingoMaster v33.0 — Layout Profissional Ajustado com Regras, Evento e QR Code');
+console.log('🎱 BingoMaster v34.0 — Layout Profissional com QR Code Público e Regras');
 </script>
 </body>
 </html>
